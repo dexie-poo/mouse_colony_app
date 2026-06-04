@@ -1,6 +1,9 @@
-﻿venv/
+venv/
+.venv/
 __pycache__/
 *.pyc
 .env
-colony.db
+mouse_colony.db
+backend/mouse_colony.db
 node_modules/
+.pytest_cache/

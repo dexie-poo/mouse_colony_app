@@ -1,6 +1,6 @@
 ﻿# Mouse Colony App
 
-V2 mouse colony management web application using FastAPI, SQLite, SQLAlchemy, and a lightweight browser frontend.
+V2 mouse colony management web application using FastAPI, SQLite or Supabase Postgres, SQLAlchemy, and a lightweight browser frontend.
 
 ## Project Structure
 
@@ -129,3 +129,20 @@ Start command: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
 ```
 
 The included `render.yaml` contains the same settings.
+
+## Supabase Database
+
+For deployed data storage, use Supabase Postgres instead of Render's temporary filesystem.
+
+1. Create a Supabase project.
+2. In Supabase, open Project Settings > Database.
+3. Copy the database connection string.
+4. In Render, add an environment variable:
+
+```text
+DATABASE_URL=your_supabase_postgres_connection_string
+```
+
+The app automatically uses `DATABASE_URL` when it is present. If `DATABASE_URL` is not set, it falls back to local SQLite at `mouse_colony.db`.
+
+If Supabase gives you a URL that starts with `postgresql://` or `postgres://`, the app converts it to the SQLAlchemy driver format automatically.

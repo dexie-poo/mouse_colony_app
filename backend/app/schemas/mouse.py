@@ -8,12 +8,11 @@ from app.schemas.cage import CageRead
 class MouseBase(BaseModel):
     genotype: str
     gender: str
-    project: str | None = None
     dob: date | None = None
-    age: str | None = None
-    age_analysed: str | None = None
-    notes: str | None = None
-    cage_id: int | None = None
+    age_months: str | None = None
+    owner: str | None = None
+    remark: str | None = None
+    cage_number: str | None = None
 
 
 class MouseCreate(MouseBase):

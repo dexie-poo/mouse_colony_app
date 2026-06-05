@@ -10,9 +10,12 @@
     <header class="app-header">
       <div>
         <h1>Mouse Colony Manager</h1>
-        <p>V1 colony records, cages, and assignments</p>
+        <p>V2 colony records, cage numbers, and mating history</p>
       </div>
-      <button id="refreshButton" type="button">Refresh</button>
+      <div class="header-actions">
+        <button id="exportButton" type="button">Export Excel</button>
+        <button id="refreshButton" type="button">Refresh</button>
+      </div>
     </header>
 
     <main class="layout">
@@ -33,67 +36,91 @@
             </select>
           </label>
           <label>
-            Project
-            <input name="project" />
-          </label>
-          <label>
             DOB
             <input name="dob" type="date" />
           </label>
           <label>
-            Age
-            <input name="age" placeholder="e.g. 8 weeks" />
+            Owner
+            <input name="owner" />
           </label>
           <label>
-            Age Analysed
-            <input name="age_analysed" placeholder="e.g. 12 weeks" />
+            Cage Number
+            <input name="cage_number" placeholder="e.g. C12" />
           </label>
           <label class="wide">
-            Notes
-            <textarea name="notes" rows="3"></textarea>
-          </label>
-          <label>
-            Cage
-            <select name="cage_id" id="mouseCageSelect">
-              <option value="">Unassigned</option>
-            </select>
+            Remark
+            <textarea name="remark" rows="3"></textarea>
           </label>
           <button type="submit">Add Mouse</button>
         </form>
       </section>
 
       <section class="panel">
-        <h2>Add Cage</h2>
-        <form id="cageForm" class="form-grid">
-          <label>
-            Cage Name
-            <input name="name" required />
-          </label>
-          <label>
-            Location
-            <input name="location" />
-          </label>
-          <label class="wide">
-            Notes
-            <textarea name="notes" rows="3"></textarea>
-          </label>
-          <button type="submit">Add Cage</button>
-        </form>
-      </section>
-
-      <section class="panel">
-        <h2>Assign Mouse to Cage</h2>
+        <h2>Assign Cage Number</h2>
         <form id="assignForm" class="form-grid">
           <label>
             Mouse
             <select name="mouse_id" id="assignMouseSelect" required></select>
           </label>
           <label>
-            Cage
-            <select name="cage_id" id="assignCageSelect" required></select>
+            Cage Number
+            <input name="cage_number" list="cageNumbers" required />
+            <datalist id="cageNumbers"></datalist>
           </label>
-          <button type="submit">Assign</button>
+          <button type="submit">Transfer</button>
         </form>
+      </section>
+
+      <section class="panel">
+        <h2>Mating</h2>
+        <form id="matingForm" class="form-grid">
+          <label>
+            Sire
+            <select name="sire_id" id="sireSelect" required></select>
+          </label>
+          <label>
+            Dam
+            <select name="dam_id" id="damSelect" required></select>
+          </label>
+          <label>
+            Mating Date
+            <input name="mating_date" type="date" />
+          </label>
+          <label>
+            Pup DOB
+            <input name="litter_dob" type="date" />
+          </label>
+          <label>
+            Litter Size
+            <input name="litter_size" inputmode="numeric" />
+          </label>
+          <label>
+            Male Pups
+            <input name="male_pups" inputmode="numeric" />
+          </label>
+          <label>
+            Female Pups
+            <input name="female_pups" inputmode="numeric" />
+          </label>
+          <label class="wide">
+            Pup Genotypes
+            <textarea name="pup_genotypes" rows="3" placeholder="e.g. WT: 3M/2F; Het: 1M/2F"></textarea>
+          </label>
+          <label class="wide">
+            Notes
+            <textarea name="notes" rows="3"></textarea>
+          </label>
+          <button type="submit">Record Mating</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Mating History</h2>
+        <label>
+          Mouse
+          <select id="historyMouseSelect"></select>
+        </label>
+        <div id="matingHistory" class="history-list"></div>
       </section>
 
       <section class="panel table-panel">
@@ -102,15 +129,15 @@
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Genotype</th>
+                <th>MiceID</th>
                 <th>Gender</th>
-                <th>Project</th>
                 <th>DOB</th>
-                <th>Age</th>
-                <th>Age Analysed</th>
-                <th>Cage</th>
-                <th>Notes</th>
+                <th>Age (Months)</th>
+                <th>Genotype</th>
+                <th>Owner</th>
+                <th>Remark</th>
+                <th>Cage Number</th>
+                <th>Mating</th>
               </tr>
             </thead>
             <tbody id="mouseTableBody"></tbody>

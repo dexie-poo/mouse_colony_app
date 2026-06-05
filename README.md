@@ -1,6 +1,6 @@
 ﻿# Mouse Colony App
 
-V1 mouse colony management web application using FastAPI, SQLite, SQLAlchemy, and a lightweight browser frontend.
+V2 mouse colony management web application using FastAPI, SQLite, SQLAlchemy, and a lightweight browser frontend.
 
 ## Project Structure
 
@@ -15,14 +15,17 @@ mouse_colony_app/
       models/
         __init__.py
         cage.py
+        mating.py
         mouse.py
       routes/
         __init__.py
         cages.py
+        matings.py
         mice.py
       schemas/
         __init__.py
         cage.py
+        mating.py
         mouse.py
   frontend/
     index.html
@@ -37,19 +40,45 @@ mouse_colony_app/
 
 - Add mouse
 - View mouse table
-- Add cage
-- Assign mouse to cage
+- Assign mouse to cage number
+- Export current mouse cage list to Excel
+- Record mating pairs
+- View mating history for any mouse
 
 Mouse identifiers:
 
-- ID
-- Genotype
+- MiceID
 - Gender
-- Project
 - DOB
-- Age
-- Age Analysed
+- Age (Months)
+- Genotype
+- Owner
+- Remark
+- Cage Number
+
+Each cage has a simple cage number. Multiple mice can be assigned to the same cage number.
+Each mouse has one current cage assignment. Assigning that mouse to another cage number transfers the mouse to the new cage.
+Age in months is calculated automatically from DOB.
+
+Mating records include:
+
+- Sire
+- Dam
+- Mating date
+- Pup DOB
+- Litter size
+- Male pups
+- Female pups
+- Pup genotypes
 - Notes
+
+## V2 Database Note
+
+If you previously ran V1 locally, delete the old SQLite file before running V2:
+
+```powershell
+Remove-Item backend\mouse_colony.db -ErrorAction SilentlyContinue
+```
 
 ## Setup
 

@@ -2,13 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.models import Cage, Mouse
-from app.routes import cages, mice
+from app.models import Cage, Mating, Mouse
+from app.routes import cages, matings, mice
 
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Mouse Colony Management API", version="0.1.0")
+app = FastAPI(title="Mouse Colony Management API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +20,7 @@ app.add_middleware(
 
 app.include_router(mice.router)
 app.include_router(cages.router)
+app.include_router(matings.router)
 
 
 @app.get("/")

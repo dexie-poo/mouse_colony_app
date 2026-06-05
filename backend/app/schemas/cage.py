@@ -2,9 +2,7 @@ from pydantic import BaseModel
 
 
 class CageBase(BaseModel):
-    name: str
-    location: str | None = None
-    notes: str | None = None
+    cage_number: str
 
 
 class CageCreate(CageBase):

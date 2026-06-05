@@ -8,8 +8,6 @@ class Cage(Base):
     __tablename__ = "cages"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False, index=True)
-    location = Column(String, nullable=True)
-    notes = Column(String, nullable=True)
+    cage_number = Column(String, unique=True, nullable=False, index=True)
 
     mice = relationship("Mouse", back_populates="cage")

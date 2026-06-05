@@ -1,6 +1,6 @@
-from app.schemas.cage import CageCreate, CageRead
-from app.schemas.mating import MatingCreate, MatingRead
-from app.schemas.mouse import MouseCreate, MouseRead, MouseUpdate
+from .cage import CageCreate, CageRead
+from .mating import MatingCreate, MatingRead
+from .mouse import MouseCreate, MouseRead, MouseUpdate
 
 
 __all__ = [

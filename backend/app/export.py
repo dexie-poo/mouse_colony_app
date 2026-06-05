@@ -3,7 +3,7 @@ from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 from xml.sax.saxutils import escape
 
-from app.models.mouse import Mouse
+from .models.mouse import Mouse
 
 
 EXPORT_COLUMNS = [

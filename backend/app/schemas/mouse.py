@@ -2,7 +2,7 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.schemas.cage import CageRead
+from .cage import CageRead
 
 
 class MouseBase(BaseModel):

@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models.mating import Mating
-from app.models.mouse import Mouse
-from app.schemas.mating import MatingCreate, MatingRead
+from ..database import get_db
+from ..models.mating import Mating
+from ..models.mouse import Mouse
+from ..schemas.mating import MatingCreate, MatingRead
 
 
 router = APIRouter(prefix="/matings", tags=["matings"])

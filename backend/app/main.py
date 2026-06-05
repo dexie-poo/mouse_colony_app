@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
-from app.models import Cage, Mating, Mouse
-from app.routes import cages, matings, mice
+from .database import Base, engine
+from .models import Cage, Mating, Mouse
+from .routes import cages, matings, mice
 
 
 Base.metadata.create_all(bind=engine)

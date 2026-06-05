@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.export import build_mouse_export_xlsx
-from app.models.cage import Cage
-from app.models.mouse import Mouse
-from app.schemas.mouse import MouseCreate, MouseRead, MouseUpdate
+from ..database import get_db
+from ..export import build_mouse_export_xlsx
+from ..models.cage import Cage
+from ..models.mouse import Mouse
+from ..schemas.mouse import MouseCreate, MouseRead, MouseUpdate
 
 
 router = APIRouter(prefix="/mice", tags=["mice"])

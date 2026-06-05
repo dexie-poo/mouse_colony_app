@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models.cage import Cage
-from app.schemas.cage import CageCreate, CageRead
+from ..database import get_db
+from ..models.cage import Cage
+from ..schemas.cage import CageCreate, CageRead
 
 
 router = APIRouter(prefix="/cages", tags=["cages"])

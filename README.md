@@ -118,3 +118,14 @@ You can also start the backend from the project root with:
 ```powershell
 .\run_backend.ps1
 ```
+
+## Deploy On Render
+
+Use these settings for a Render web service:
+
+```text
+Build command: pip install -r requirements.txt
+Start command: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+```
+
+The included `render.yaml` contains the same settings.

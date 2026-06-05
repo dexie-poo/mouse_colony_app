@@ -58,14 +58,14 @@ From the project root:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r backend\requirements.txt
+python -m pip install -r backend\requirements.txt
 ```
 
 ## Run Backend
 
 ```powershell
 cd backend
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 The API runs at:
@@ -83,3 +83,9 @@ http://127.0.0.1:8000/docs
 ## Run Frontend
 
 Open `frontend/index.html` in a browser after the backend is running.
+
+You can also start the backend from the project root with:
+
+```powershell
+.\run_backend.ps1
+```

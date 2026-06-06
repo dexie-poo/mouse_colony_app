@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
@@ -36,12 +37,50 @@ def create_analysis(
 
 @router.get("/", response_model=list[AnalysisRead])
 def list_analyses(
+    q: str | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    query = (
+        db.query(Analysis)
+        .join(Mouse)
+        .filter(Analysis.user_id == current_user.id)
+    )
+
+    if q:
+        pattern = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                Mouse.external_id.ilike(pattern),
+                Mouse.genotype.ilike(pattern),
+                Mouse.remark.ilike(pattern),
+                Analysis.organs_extracted.ilike(pattern),
+                Analysis.organ_conditions.ilike(pattern),
+                Analysis.preservation_method.ilike(pattern),
+                Analysis.notes.ilike(pattern),
+            )
+        )
+
+    return query.order_by(Analysis.id.desc()).all()
+
+
+@router.get("/mouse/{mouse_id}", response_model=list[AnalysisRead])
+def list_analyses_for_mouse(
+    mouse_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    mouse = (
+        db.query(Mouse)
+        .filter(Mouse.id == mouse_id, Mouse.user_id == current_user.id)
+        .first()
+    )
+    if mouse is None:
+        raise HTTPException(status_code=404, detail="Mouse not found")
+
     return (
         db.query(Analysis)
-        .filter(Analysis.user_id == current_user.id)
+        .filter(Analysis.user_id == current_user.id, Analysis.mouse_id == mouse_id)
         .order_by(Analysis.id.desc())
         .all()
     )

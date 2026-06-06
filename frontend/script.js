@@ -13,6 +13,9 @@ const addPupButton = document.querySelector("#addPupButton");
 const pupRows = document.querySelector("#pupRows");
 const analysisForm = document.querySelector("#analysisForm");
 const analysisMouseSelect = document.querySelector("#analysisMouseSelect");
+const analysisRecordMouseSelect = document.querySelector("#analysisRecordMouseSelect");
+const analysisSearchInput = document.querySelector("#analysisSearchInput");
+const clearAnalysisSearchButton = document.querySelector("#clearAnalysisSearchButton");
 const analysisList = document.querySelector("#analysisList");
 const currentUserLabel = document.querySelector("#currentUserLabel");
 const logoutButton = document.querySelector("#logoutButton");
@@ -32,6 +35,7 @@ let mice = [];
 let cages = [];
 let matings = [];
 let analyses = [];
+let displayedAnalyses = [];
 let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
 
@@ -138,6 +142,14 @@ function renderControls() {
   renderMouseSelect(historyMouseSelect);
   renderMouseSelect(analysisMouseSelect);
 
+  const analysedMouseIds = new Set(analyses.map((analysis) => analysis.mouse_id));
+  analysisRecordMouseSelect.innerHTML = [
+    `<option value="">All analysed mice</option>`,
+    ...mice
+      .filter((mouse) => analysedMouseIds.has(mouse.id))
+      .map((mouse) => `<option value="${mouse.id}">${mouseLabel(mouse)}</option>`),
+  ].join("");
+
   cageNumbers.innerHTML = cages
     .map((cage) => `<option value="${cage.cage_number}"></option>`)
     .join("");
@@ -199,13 +211,13 @@ function renderMatingHistory(mouseId) {
     .join("");
 }
 
-function renderAnalyses() {
-  if (!analyses.length) {
+function renderAnalyses(records = displayedAnalyses) {
+  if (!records.length) {
     analysisList.innerHTML = `<p class="empty-state">No analysis records.</p>`;
     return;
   }
 
-  analysisList.innerHTML = analyses
+  analysisList.innerHTML = records
     .map((analysis) => {
       const mouse = mice.find((item) => item.id === analysis.mouse_id);
       const image = analysis.image_data
@@ -224,6 +236,13 @@ function renderAnalyses() {
       `;
     })
     .join("");
+}
+
+async function loadAnalyses(path = "/analyses/") {
+  displayedAnalyses = await request(path);
+  analyses = path === "/analyses/" ? displayedAnalyses : analyses;
+  renderControls();
+  renderAnalyses(displayedAnalyses);
 }
 
 function addPupRow(defaults = {}) {
@@ -276,11 +295,12 @@ async function loadData() {
     request("/matings/"),
     request("/analyses/"),
   ]);
+  displayedAnalyses = analyses;
 
   renderControls();
   renderMouseTable();
   renderMatingHistory(historyMouseSelect.value);
-  renderAnalyses();
+  renderAnalyses(displayedAnalyses);
 }
 
 loginForm.addEventListener("submit", async (event) => {
@@ -344,7 +364,7 @@ importForm.addEventListener("submit", async (event) => {
 
   const result = await response.json();
   importForm.reset();
-  showStatus(`Imported ${result.imported} mice`);
+  showStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`);
   await loadData();
 });
 
@@ -420,6 +440,32 @@ analysisForm.addEventListener("submit", async (event) => {
   await loadData();
 });
 
+analysisSearchInput.addEventListener("input", async () => {
+  const query = analysisSearchInput.value.trim();
+  analysisRecordMouseSelect.value = "";
+  if (!query) {
+    await loadAnalyses();
+    return;
+  }
+  await loadAnalyses(`/analyses/?q=${encodeURIComponent(query)}`);
+});
+
+analysisRecordMouseSelect.addEventListener("change", async () => {
+  analysisSearchInput.value = "";
+  const mouseId = analysisRecordMouseSelect.value;
+  if (!mouseId) {
+    await loadAnalyses();
+    return;
+  }
+  await loadAnalyses(`/analyses/mouse/${mouseId}`);
+});
+
+clearAnalysisSearchButton.addEventListener("click", async () => {
+  analysisSearchInput.value = "";
+  analysisRecordMouseSelect.value = "";
+  await loadAnalyses();
+});
+
 historyMouseSelect.addEventListener("change", () => {
   renderMatingHistory(historyMouseSelect.value);
 });
@@ -478,6 +524,7 @@ logoutButton.addEventListener("click", () => {
   cages = [];
   matings = [];
   analyses = [];
+  displayedAnalyses = [];
 });
 
 renderAuthState();

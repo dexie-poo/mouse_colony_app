@@ -109,8 +109,7 @@ async def import_mice(
         raise HTTPException(status_code=400, detail="Please upload an Excel .xlsx file")
 
     content = await file.read()
-    imported = import_mice_from_xlsx(content, db, current_user)
-    return {"imported": imported}
+    return import_mice_from_xlsx(content, db, current_user)
 
 
 @router.patch("/{mouse_id}", response_model=MouseRead)

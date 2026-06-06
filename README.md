@@ -123,6 +123,8 @@ The import accepts `.xlsx` files with these columns:
 Group, ID#, Retag, Sex, Color, DOB, Age (Days), Age (Months), Genotype, Owner, Purpose, Barcodes
 ```
 
+The importer scans the first 25 rows of every worksheet to find the most likely header row, so the table does not need to start on row 1. It also accepts common column-name variants such as `Mouse ID`, `Gender`, `Date of Birth`, `Cage ID`, and `Cage Number`.
+
 Import mapping:
 
 - `ID#` becomes the displayed mouse ID.

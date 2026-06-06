@@ -223,6 +223,14 @@ th {
   margin-top: 12px;
 }
 
+.analysis-search {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr auto;
+  margin-top: 16px;
+}
+
 .history-item {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -263,6 +271,21 @@ th {
   padding: 12px 14px;
 }
 
+.app-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+  padding: 18px;
+}
+
+.app-footer a {
+  color: var(--accent);
+}
+
 @media (max-width: 760px) {
   .app-header {
     align-items: flex-start;
@@ -281,7 +304,8 @@ th {
   .layout,
   .form-grid,
   .auth-panel,
-  .pup-row {
+  .pup-row,
+  .analysis-search {
     grid-template-columns: 1fr;
   }
 

@@ -218,6 +218,17 @@
           </label>
           <button type="submit">Record Analysis</button>
         </form>
+        <div class="analysis-search">
+          <label>
+            Search Analysed Mice
+            <input id="analysisSearchInput" placeholder="Mouse ID, genotype, organ, condition, notes" />
+          </label>
+          <label>
+            Analysed Mouse
+            <select id="analysisRecordMouseSelect"></select>
+          </label>
+          <button id="clearAnalysisSearchButton" type="button">Clear</button>
+        </div>
         <div id="analysisList" class="history-list"></div>
       </section>
 
@@ -244,6 +255,12 @@
         </div>
       </section>
     </main>
+
+    <footer class="app-footer">
+      <strong>Contact</strong>
+      <span>Developed by Dexter</span>
+      <a href="mailto:dexter.leung@nyulangone.org">dexter.leung@nyulangone.org</a>
+    </footer>
 
     <div id="status" class="status" role="status"></div>
     <script src="/static/script.js"></script>

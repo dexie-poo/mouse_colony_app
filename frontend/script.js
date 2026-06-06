@@ -8,6 +8,7 @@ const registerForm = document.querySelector("#registerForm");
 const importForm = document.querySelector("#importForm");
 const mouseForm = document.querySelector("#mouseForm");
 const assignForm = document.querySelector("#assignForm");
+const assignMouseSearchInput = document.querySelector("#assignMouseSearchInput");
 const matingForm = document.querySelector("#matingForm");
 const addPupButton = document.querySelector("#addPupButton");
 const pupRows = document.querySelector("#pupRows");
@@ -27,9 +28,13 @@ const assignMouseSelect = document.querySelector("#assignMouseSelect");
 const sireSelect = document.querySelector("#sireSelect");
 const damSelect = document.querySelector("#damSelect");
 const historyMouseSelect = document.querySelector("#historyMouseSelect");
+const matingHistorySearchInput = document.querySelector("#matingHistorySearchInput");
+const clearMatingHistorySearchButton = document.querySelector("#clearMatingHistorySearchButton");
 const cageNumbers = document.querySelector("#cageNumbers");
 const matingHistory = document.querySelector("#matingHistory");
 const statusBox = document.querySelector("#status");
+const tabButtons = document.querySelectorAll("[data-tab]");
+const tabPanels = document.querySelectorAll("[data-tab-panel]");
 
 let mice = [];
 let cages = [];
@@ -97,6 +102,15 @@ function clearAuth() {
   renderAuthState();
 }
 
+function showTab(tabName) {
+  tabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.tab === tabName);
+  });
+  tabPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.tabPanel !== tabName);
+  });
+}
+
 function renderAuthState() {
   const loggedIn = Boolean(authToken);
   authPanel.classList.toggle("hidden", loggedIn);
@@ -128,15 +142,34 @@ function cageNumber(mouse) {
   return mouse.cage ? mouse.cage.cage_number : "";
 }
 
-function renderMouseSelect(select, placeholder = "Select mouse") {
+function searchableMouseText(mouse) {
+  return [mouse.id, mouse.external_id, mouse.genotype, mouse.gender, mouse.owner, cageNumber(mouse)]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function renderMouseSelect(select, placeholder = "Select mouse", filterText = "") {
+  const currentValue = select.value;
+  const query = filterText.trim().toLowerCase();
+  const options = query
+    ? mice.filter((mouse) => searchableMouseText(mouse).includes(query))
+    : mice;
+
   select.innerHTML = [
     `<option value="">${placeholder}</option>`,
-    ...mice.map((mouse) => `<option value="${mouse.id}">${mouseLabel(mouse)}</option>`),
+    ...options.map((mouse) => `<option value="${mouse.id}">${mouseLabel(mouse)}</option>`),
   ].join("");
+
+  if (options.some((mouse) => String(mouse.id) === currentValue)) {
+    select.value = currentValue;
+  } else if (query && options.length === 1) {
+    select.value = String(options[0].id);
+  }
 }
 
 function renderControls() {
-  renderMouseSelect(assignMouseSelect);
+  renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
   renderMouseSelect(sireSelect, "Select sire");
   renderMouseSelect(damSelect, "Select dam");
   renderMouseSelect(historyMouseSelect);
@@ -176,16 +209,42 @@ function renderMouseTable() {
     .join("");
 }
 
-function renderMatingHistory(mouseId) {
-  if (!mouseId) {
-    matingHistory.innerHTML = "";
+function matingSearchText(mating) {
+  const sire = mice.find((mouse) => mouse.id === mating.sire_id);
+  const dam = mice.find((mouse) => mouse.id === mating.dam_id);
+  return [
+    mating.mating_date,
+    mating.litter_dob,
+    mating.litter_size,
+    mating.male_pups,
+    mating.female_pups,
+    mating.pup_genotypes,
+    mating.kept_mouse_ids,
+    mating.notes,
+    sire ? mouseLabel(sire) : mating.sire_id,
+    dam ? mouseLabel(dam) : mating.dam_id,
+  ]
+    .filter((value) => value !== null && value !== undefined && value !== "")
+    .join(" ")
+    .toLowerCase();
+}
+
+function renderMatingHistory() {
+  const mouseId = historyMouseSelect.value;
+  const query = matingHistorySearchInput.value.trim().toLowerCase();
+
+  if (!mouseId && !query) {
+    matingHistory.innerHTML = `<p class="empty-state">Select a mouse or search mating history.</p>`;
     return;
   }
 
-  const selectedId = Number(mouseId);
-  const records = matings.filter(
-    (mating) => mating.sire_id === selectedId || mating.dam_id === selectedId,
-  );
+  const selectedId = mouseId ? Number(mouseId) : null;
+  const records = matings.filter((mating) => {
+    const matchesMouse =
+      selectedId === null || mating.sire_id === selectedId || mating.dam_id === selectedId;
+    const matchesSearch = !query || matingSearchText(mating).includes(query);
+    return matchesMouse && matchesSearch;
+  });
 
   if (!records.length) {
     matingHistory.innerHTML = `<p class="empty-state">No mating history recorded.</p>`;
@@ -299,7 +358,7 @@ async function loadData() {
 
   renderControls();
   renderMouseTable();
-  renderMatingHistory(historyMouseSelect.value);
+  renderMatingHistory();
   renderAnalyses(displayedAnalyses);
 }
 
@@ -467,7 +526,27 @@ clearAnalysisSearchButton.addEventListener("click", async () => {
 });
 
 historyMouseSelect.addEventListener("change", () => {
-  renderMatingHistory(historyMouseSelect.value);
+  renderMatingHistory();
+});
+
+matingHistorySearchInput.addEventListener("input", () => {
+  renderMatingHistory();
+});
+
+clearMatingHistorySearchButton.addEventListener("click", () => {
+  historyMouseSelect.value = "";
+  matingHistorySearchInput.value = "";
+  renderMatingHistory();
+});
+
+assignMouseSearchInput.addEventListener("input", () => {
+  renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
+});
+
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    showTab(button.dataset.tab);
+  });
 });
 
 mouseTableBody.addEventListener("click", (event) => {
@@ -477,7 +556,8 @@ mouseTableBody.addEventListener("click", (event) => {
   }
 
   historyMouseSelect.value = historyButton.dataset.historyId;
-  renderMatingHistory(historyMouseSelect.value);
+  showTab("mating");
+  renderMatingHistory();
 });
 
 refreshButton.addEventListener("click", () => {

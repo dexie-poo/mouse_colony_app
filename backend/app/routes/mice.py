@@ -46,6 +46,12 @@ def calculate_age_months(dob: date | None):
     return str(max(months, 0))
 
 
+def update_display_ages(mice: list[Mouse]):
+    for mouse in mice:
+        mouse.age_months = calculate_age_months(mouse.dob)
+    return mice
+
+
 @router.post("/", response_model=MouseRead)
 def create_mouse(
     mouse: MouseCreate,
@@ -72,12 +78,13 @@ def list_mice(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return (
+    mice = (
         db.query(Mouse)
         .filter(Mouse.user_id == current_user.id)
         .order_by(Mouse.id)
         .all()
     )
+    return update_display_ages(mice)
 
 
 @router.get("/export.xlsx")
@@ -91,7 +98,7 @@ def export_mice(
         .order_by(Mouse.id)
         .all()
     )
-    workbook = build_mouse_export_xlsx(mice)
+    workbook = build_mouse_export_xlsx(update_display_ages(mice))
     return StreamingResponse(
         workbook,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

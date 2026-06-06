@@ -52,8 +52,16 @@
       </div>
     </section>
 
-    <main id="appContent" class="layout hidden">
-      <section class="panel">
+    <main id="appContent" class="app-main hidden">
+      <nav class="tabs" aria-label="Application sections">
+        <button class="tab-button active" type="button" data-tab="mice">Mice</button>
+        <button class="tab-button" type="button" data-tab="cages">Cages</button>
+        <button class="tab-button" type="button" data-tab="mating">Mating</button>
+        <button class="tab-button" type="button" data-tab="analysis">Analysis</button>
+      </nav>
+
+      <div class="layout">
+      <section class="panel tab-panel" data-tab-panel="mice">
         <h2>Add Mouse</h2>
         <form id="mouseForm" class="form-grid">
           <label>
@@ -89,7 +97,7 @@
         </form>
       </section>
 
-      <section class="panel">
+      <section class="panel tab-panel" data-tab-panel="mice">
         <h2>Import Mice</h2>
         <form id="importForm" class="form-grid">
           <label class="wide">
@@ -100,9 +108,13 @@
         </form>
       </section>
 
-      <section class="panel">
+      <section class="panel tab-panel hidden" data-tab-panel="cages">
         <h2>Assign Cage Number</h2>
         <form id="assignForm" class="form-grid">
+          <label class="wide">
+            Search Mouse ID
+            <input id="assignMouseSearchInput" placeholder="Type mouse ID, genotype, or gender" />
+          </label>
           <label>
             Mouse
             <select name="mouse_id" id="assignMouseSelect" required></select>
@@ -116,7 +128,7 @@
         </form>
       </section>
 
-      <section class="panel">
+      <section class="panel tab-panel hidden" data-tab-panel="mating">
         <h2>Mating</h2>
         <form id="matingForm" class="form-grid">
           <label>
@@ -166,17 +178,24 @@
         </form>
       </section>
 
-      <section class="panel">
+      <section class="panel tab-panel hidden" data-tab-panel="mating">
         <h2>Mating History</h2>
-        <label>
-          Mouse
-          <select id="historyMouseSelect"></select>
-        </label>
-        <button id="exportLitterHistoryButton" type="button">Export Litter History</button>
+        <div class="history-search">
+          <label>
+            Mouse
+            <select id="historyMouseSelect"></select>
+          </label>
+          <label>
+            Search History
+            <input id="matingHistorySearchInput" placeholder="Mouse ID, genotype, date, notes, pup genotype" />
+          </label>
+          <button id="clearMatingHistorySearchButton" type="button">Clear</button>
+          <button id="exportLitterHistoryButton" type="button">Export Litter History</button>
+        </div>
         <div id="matingHistory" class="history-list"></div>
       </section>
 
-      <section class="panel">
+      <section class="panel tab-panel hidden" data-tab-panel="analysis">
         <h2>Analysis</h2>
         <form id="analysisForm" class="form-grid">
           <label>
@@ -232,7 +251,7 @@
         <div id="analysisList" class="history-list"></div>
       </section>
 
-      <section class="panel table-panel">
+      <section class="panel table-panel tab-panel" data-tab-panel="mice">
         <h2>Mouse Table</h2>
         <div class="table-wrap">
           <table>
@@ -254,6 +273,7 @@
           </table>
         </div>
       </section>
+      </div>
     </main>
 
     <footer class="app-footer">

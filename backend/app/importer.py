@@ -12,6 +12,10 @@ from .models.user import User
 HEADER_ALIASES = {
     "id#": "external_id",
     "id": "external_id",
+    "new id# (retags)": "external_id",
+    "new id# retags": "external_id",
+    "retag": "external_id",
+    "retags": "external_id",
     "mouse id": "external_id",
     "mouseid": "external_id",
     "mice id": "external_id",
@@ -26,14 +30,33 @@ HEADER_ALIASES = {
     "agemonths": "age_months",
     "genotype": "genotype",
     "geno": "genotype",
+    "genotype reference #1": "genotype_reference_1",
+    "genotype reference 1": "genotype_reference_1",
+    "genotype ref #1": "genotype_reference_1",
+    "genotype ref 1": "genotype_reference_1",
+    "genotype reference #2": "genotype_reference_2",
+    "genotype reference 2": "genotype_reference_2",
+    "genotype ref #2": "genotype_reference_2",
+    "genotype ref 2": "genotype_reference_2",
     "purpose": "purpose",
+    "animal use (breeding/experimental)": "purpose",
+    "animal use breeding/experimental": "purpose",
     "color": "color",
+    "clr": "color",
     "barcodes": "cage_number",
     "barcode": "cage_number",
     "cage": "cage_number",
     "cage id": "cage_number",
     "cage number": "cage_number",
     "cage #": "cage_number",
+    "male (m) (father)": "father",
+    "male m father": "father",
+    "father": "father",
+    "female (f) (mother)": "mother",
+    "female f mother": "mother",
+    "mother": "mother",
+    "toe id": "toe_id",
+    "litter": "litter",
 }
 
 COMMON_FIELDS = {"external_id", "gender", "dob", "genotype", "cage_number"}
@@ -71,6 +94,18 @@ def normalize_cell(value):
         return None
     text = str(value).strip()
     return text or None
+
+
+def normalize_gender(value):
+    text = normalize_cell(value)
+    if not text:
+        return "Unknown"
+    lowered = text.lower()
+    if lowered in {"m", "male"}:
+        return "Male"
+    if lowered in {"f", "female"}:
+        return "Female"
+    return text
 
 
 def parse_dob(value):
@@ -136,6 +171,39 @@ def find_header_row(rows):
     return best_index, best_headers
 
 
+def looks_like_headerless_cage_list(rows):
+    mouse_id_count = 0
+    barcode_count = 0
+    for row in rows:
+        mouse_id = normalize_cell(row[1]) if len(row) > 1 else None
+        barcode = normalize_cell(row[11]) if len(row) > 11 else None
+        if mouse_id:
+            mouse_id_count += 1
+        if barcode:
+            barcode_count += 1
+    return mouse_id_count >= 5 and barcode_count >= 1
+
+
+def headerless_cage_values(row, current_cage_number):
+    cage_number = normalize_cell(row[11]) if len(row) > 11 else None
+    if cage_number:
+        current_cage_number = cage_number
+
+    return (
+        {
+            "external_id": row[1] if len(row) > 1 else None,
+            "gender": row[3] if len(row) > 3 else None,
+            "color": row[4] if len(row) > 4 else None,
+            "dob": row[5] if len(row) > 5 else None,
+            "age_months": row[7] if len(row) > 7 else None,
+            "genotype": row[8] if len(row) > 8 else None,
+            "purpose": row[10] if len(row) > 10 else None,
+            "cage_number": current_cage_number,
+        },
+        current_cage_number,
+    )
+
+
 def row_has_mouse_signal(values):
     return any(
         normalize_cell(values.get(field))
@@ -157,17 +225,38 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
         sheets_scanned += 1
 
         header_index, headers = find_header_row(rows)
-        if header_index is None:
+        headerless_cage_list = header_index is None and looks_like_headerless_cage_list(rows)
+        current_cage_number = None
+
+        if headerless_cage_list:
+            data_rows = rows
+            matched_fields.update(
+                {"external_id", "gender", "color", "dob", "age_months", "genotype", "purpose", "cage_number"}
+            )
+        elif header_index is not None:
+            data_rows = rows[header_index + 1 :]
+            matched_fields.update(header for header in headers if header)
+        else:
             continue
 
-        matched_fields.update(header for header in headers if header)
-        for row in rows[header_index + 1 :]:
-            values = {
-                header: row[index]
-                for index, header in enumerate(headers)
-                if header and index < len(row)
-            }
+        for row in data_rows:
+            if headerless_cage_list:
+                values, current_cage_number = headerless_cage_values(row, current_cage_number)
+            else:
+                values = {}
+                for index, header in enumerate(headers):
+                    if not header or index >= len(row):
+                        continue
+                    current_value = row[index]
+                    existing_value = values.get(header)
+                    if normalize_cell(existing_value):
+                        continue
+                    values[header] = current_value
             if not any(values.values()):
+                continue
+            has_external_id_column = "external_id" in matched_fields
+            if has_external_id_column and not normalize_cell(values.get("external_id")):
+                skipped += 1
                 continue
             if not row_has_mouse_signal(values):
                 skipped += 1
@@ -179,6 +268,14 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
                 remark_parts.append(f"Color: {normalize_cell(values.get('color'))}")
             if normalize_cell(values.get("purpose")):
                 remark_parts.append(f"Purpose: {normalize_cell(values.get('purpose'))}")
+            if normalize_cell(values.get("father")):
+                remark_parts.append(f"Father: {normalize_cell(values.get('father'))}")
+            if normalize_cell(values.get("mother")):
+                remark_parts.append(f"Mother: {normalize_cell(values.get('mother'))}")
+            if normalize_cell(values.get("toe_id")):
+                remark_parts.append(f"Toe ID: {normalize_cell(values.get('toe_id'))}")
+            if normalize_cell(values.get("litter")):
+                remark_parts.append(f"Litter: {normalize_cell(values.get('litter'))}")
 
             cage = get_or_create_cage(
                 db,
@@ -186,13 +283,19 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
                 current_user.id,
             )
             age_months = calculate_age_months(dob) or normalize_cell(values.get("age_months"))
+            genotype = (
+                normalize_cell(values.get("genotype"))
+                or normalize_cell(values.get("genotype_reference_1"))
+                or normalize_cell(values.get("genotype_reference_2"))
+                or "Unknown"
+            )
             mouse = Mouse(
                 user_id=current_user.id,
                 external_id=normalize_cell(values.get("external_id")),
-                gender=normalize_cell(values.get("gender")) or "Unknown",
+                gender=normalize_gender(values.get("gender")),
                 dob=dob,
                 age_months=age_months,
-                genotype=normalize_cell(values.get("genotype")) or "Unknown",
+                genotype=genotype,
                 owner=current_user.username,
                 remark="; ".join(remark_parts) or None,
             )

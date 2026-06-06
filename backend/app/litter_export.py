@@ -3,18 +3,21 @@ from io import BytesIO
 from zipfile import ZIP_DEFLATED, ZipFile
 from xml.sax.saxutils import escape
 
-from .models.mouse import Mouse
+from .models.litter_pup import LitterPup
 
 
-EXPORT_COLUMNS = [
-    "MiceID",
-    "Gender",
+LITTER_EXPORT_COLUMNS = [
+    "ID#",
+    "Male (M)",
+    "(Father)",
+    "(Mother)",
+    "Sex",
     "DOB",
+    "Wean Date",
+    "Age (Days)",
     "Age (Months)",
-    "Genotype",
-    "Owner",
-    "Remark",
-    "Cage Number",
+    "Genotype Reference #1",
+    "Genotype Reference #2",
 ]
 
 
@@ -45,24 +48,43 @@ def row_xml(row_index: int, values):
     return f'<row r="{row_index}">{cells}</row>'
 
 
-def mouse_export_row(mouse: Mouse):
+def age_days(dob: date | None):
+    return (date.today() - dob).days if dob else None
+
+
+def age_months(dob: date | None):
+    if dob is None:
+        return None
+    today = date.today()
+    months = (today.year - dob.year) * 12 + today.month - dob.month
+    if today.day < dob.day:
+        months -= 1
+    return max(months, 0)
+
+
+def pup_row(pup: LitterPup):
+    sire = pup.mating.sire
+    dam = pup.mating.dam
     return [
-        mouse.external_id or mouse.id,
-        mouse.gender,
-        mouse.dob,
-        mouse.age_months,
-        mouse.genotype,
-        mouse.owner,
-        mouse.remark,
-        mouse.cage_number,
+        pup.assigned_external_id or (pup.mouse.external_id if pup.mouse else ""),
+        "M" if pup.sex.lower().startswith("m") else "",
+        sire.external_id or sire.id,
+        dam.external_id or dam.id,
+        pup.sex,
+        pup.dob,
+        pup.wean_date,
+        age_days(pup.dob),
+        age_months(pup.dob),
+        pup.genotype_reference_1,
+        pup.genotype_reference_2,
     ]
 
 
-def build_mouse_export_xlsx(mice: list[Mouse]):
-    rows = [row_xml(1, EXPORT_COLUMNS)]
+def build_litter_history_xlsx(pups: list[LitterPup]):
+    rows = [row_xml(1, LITTER_EXPORT_COLUMNS)]
     rows.extend(
-        row_xml(row_index, mouse_export_row(mouse))
-        for row_index, mouse in enumerate(mice, start=2)
+        row_xml(row_index, pup_row(pup))
+        for row_index, pup in enumerate(pups, start=2)
     )
 
     sheet_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -73,7 +95,7 @@ def build_mouse_export_xlsx(mice: list[Mouse]):
     workbook_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="Mice Cage List" sheetId="1" r:id="rId1"/>
+    <sheet name="Litter History" sheetId="1" r:id="rId1"/>
   </sheets>
 </workbook>"""
 

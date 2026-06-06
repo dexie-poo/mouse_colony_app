@@ -14,7 +14,7 @@ from .schema_upgrades import apply_v3_schema_upgrades
 Base.metadata.create_all(bind=engine)
 apply_v3_schema_upgrades(engine)
 
-app = FastAPI(title="Mouse Colony Management API", version="0.3.0")
+app = FastAPI(title="Mouse Colony Management API", version="0.3.1")
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
 app.add_middleware(

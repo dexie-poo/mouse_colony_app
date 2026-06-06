@@ -1,6 +1,6 @@
 ﻿# Mouse Colony App
 
-V3.0 mouse colony management web application using FastAPI, SQLite or Supabase Postgres, SQLAlchemy, and a lightweight browser frontend.
+V3.1.1 mouse colony management web application using FastAPI, SQLite or Supabase Postgres, SQLAlchemy, and a lightweight browser frontend.
 
 ## Project Structure
 
@@ -47,6 +47,7 @@ mouse_colony_app/
 - Simple user login and user creation
 - Separate mouse colony data per user
 - Add mouse
+- Import mice from Excel
 - View mouse table
 - Assign mouse to cage number
 - Export current mouse cage list to Excel
@@ -54,6 +55,7 @@ mouse_colony_app/
 - View mating history for any mouse
 - Keep or euthanise litters
 - Auto-create mouse records for kept pups
+- Export separate litter/genotyping history workbook
 - Record sacrifice and organ analysis information
 
 Mouse identifiers:
@@ -81,11 +83,27 @@ Mating records include:
 - Male pups
 - Female pups
 - Pup genotypes
-- Genotyping reference
-- Keep/euthanise decision
-- Kept pup counts
+- Individual pup labels
+- Individual pup sex
+- Individual pup genotyping references
+- Individual pup keep/euthanise decision
+- Assigned ID# for kept pups
 - Auto-created kept mouse IDs
 - Notes
+
+The separate litter history export includes:
+
+- ID#
+- Male (M)
+- Father
+- Mother
+- Sex
+- DOB
+- Wean Date
+- Age (Days)
+- Age (Months)
+- Genotype Reference #1
+- Genotype Reference #2
 
 Analysis records include:
 
@@ -96,6 +114,26 @@ Analysis records include:
 - Picture upload
 - Preservation method: FFPE, OCT, or fresh frozen
 - Notes
+
+## Excel Import
+
+The import accepts `.xlsx` files with these columns:
+
+```text
+Group, ID#, Retag, Sex, Color, DOB, Age (Days), Age (Months), Genotype, Owner, Purpose, Barcodes
+```
+
+Import mapping:
+
+- `ID#` becomes the displayed mouse ID.
+- `Sex` becomes gender.
+- `DOB` is imported and age in months is recalculated when possible.
+- `Age (Months)` is used only when DOB cannot be parsed.
+- `Genotype` becomes genotype.
+- `Barcodes` becomes cage number.
+- `Color` and `Purpose` are added to remarks.
+- `Group`, `Retag`, `Age (Days)`, and spreadsheet `Owner` are ignored.
+- Owner is set to the logged-in user who imported the file.
 
 ## V3 Database Note
 

@@ -1,12 +1,13 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..database import get_db
 from ..export import build_mouse_export_xlsx
+from ..importer import import_mice_from_xlsx
 from ..models.cage import Cage
 from ..models.mouse import Mouse
 from ..models.user import User
@@ -96,6 +97,20 @@ def export_mice(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": 'attachment; filename="mice_cage_list.xlsx"'},
     )
+
+
+@router.post("/import.xlsx")
+async def import_mice(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not file.filename.lower().endswith((".xlsx", ".xlsm")):
+        raise HTTPException(status_code=400, detail="Please upload an Excel .xlsx file")
+
+    content = await file.read()
+    imported = import_mice_from_xlsx(content, db, current_user)
+    return {"imported": imported}
 
 
 @router.patch("/{mouse_id}", response_model=MouseRead)

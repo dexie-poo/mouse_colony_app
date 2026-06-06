@@ -29,3 +29,4 @@ class Mating(Base):
     user = relationship("User", back_populates="matings")
     sire = relationship("Mouse", back_populates="sire_matings", foreign_keys=[sire_id])
     dam = relationship("Mouse", back_populates="dam_matings", foreign_keys=[dam_id])
+    pups = relationship("LitterPup", back_populates="mating")

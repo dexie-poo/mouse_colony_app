@@ -19,6 +19,7 @@ class MatingBase(BaseModel):
     kept_female_pups: int | None = None
     kept_pup_genotype: str | None = None
     notes: str | None = None
+    pups: list["LitterPupCreate"] = []
 
     @model_validator(mode="after")
     def validate_mice_and_litter(self):
@@ -43,6 +44,27 @@ class MatingCreate(MatingBase):
 class MatingRead(MatingBase):
     id: int
     kept_mouse_ids: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class LitterPupCreate(BaseModel):
+    pup_label: str | None = None
+    assigned_external_id: str | None = None
+    sex: str
+    wean_date: date | None = None
+    genotype: str | None = None
+    genotype_reference_1: str | None = None
+    genotype_reference_2: str | None = None
+    decision: str
+
+
+class LitterPupRead(LitterPupCreate):
+    id: int
+    mating_id: int
+    mouse_id: int | None = None
+    dob: date | None = None
 
     class Config:
         from_attributes = True

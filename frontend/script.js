@@ -5,15 +5,19 @@ const authPanel = document.querySelector("#authPanel");
 const appContent = document.querySelector("#appContent");
 const loginForm = document.querySelector("#loginForm");
 const registerForm = document.querySelector("#registerForm");
+const importForm = document.querySelector("#importForm");
 const mouseForm = document.querySelector("#mouseForm");
 const assignForm = document.querySelector("#assignForm");
 const matingForm = document.querySelector("#matingForm");
+const addPupButton = document.querySelector("#addPupButton");
+const pupRows = document.querySelector("#pupRows");
 const analysisForm = document.querySelector("#analysisForm");
 const analysisMouseSelect = document.querySelector("#analysisMouseSelect");
 const analysisList = document.querySelector("#analysisList");
 const currentUserLabel = document.querySelector("#currentUserLabel");
 const logoutButton = document.querySelector("#logoutButton");
 const exportButton = document.querySelector("#exportButton");
+const exportLitterHistoryButton = document.querySelector("#exportLitterHistoryButton");
 const refreshButton = document.querySelector("#refreshButton");
 const mouseTableBody = document.querySelector("#mouseTableBody");
 const assignMouseSelect = document.querySelector("#assignMouseSelect");
@@ -113,7 +117,7 @@ async function fileToDataUrl(file) {
 }
 
 function mouseLabel(mouse) {
-  return `#${mouse.id} ${mouse.genotype} ${mouse.gender}`;
+  return `#${mouse.external_id || mouse.id} ${mouse.genotype} ${mouse.gender}`;
 }
 
 function cageNumber(mouse) {
@@ -144,7 +148,7 @@ function renderMouseTable() {
     .map((mouse) => {
       return `
         <tr>
-          <td>${mouse.id}</td>
+          <td>${mouse.external_id || mouse.id}</td>
           <td>${mouse.gender}</td>
           <td>${mouse.dob || ""}</td>
           <td>${mouse.age_months || ""}</td>
@@ -187,8 +191,6 @@ function renderMatingHistory(mouseId) {
           <span>Sire ${sire ? mouseLabel(sire) : mating.sire_id} x Dam ${dam ? mouseLabel(dam) : mating.dam_id}</span>
           <span>Litter size: ${mating.litter_size ?? ""}</span>
           <span>Pup genotypes: ${mating.pup_genotypes || ""}</span>
-          <span>Genotyping reference: ${mating.genotyping_reference || ""}</span>
-          <span>Decision: ${mating.keep_litter ? "Keep" : ""} ${mating.euthanise_litter ? "Euthanise" : ""}</span>
           <span>Created mouse IDs: ${mating.kept_mouse_ids || ""}</span>
           <span>${mating.notes || ""}</span>
         </article>
@@ -222,6 +224,49 @@ function renderAnalyses() {
       `;
     })
     .join("");
+}
+
+function addPupRow(defaults = {}) {
+  const row = document.createElement("div");
+  row.className = "pup-row";
+  row.innerHTML = `
+    <input name="pup_label" placeholder="M1 / F3" value="${defaults.pup_label || ""}" />
+    <select name="sex">
+      <option value="Male" ${defaults.sex === "Male" ? "selected" : ""}>Male</option>
+      <option value="Female" ${defaults.sex === "Female" ? "selected" : ""}>Female</option>
+    </select>
+    <input name="genotype" placeholder="Genotype" value="${defaults.genotype || ""}" />
+    <input name="genotype_reference_1" placeholder="Genotype Ref #1" value="${defaults.genotype_reference_1 || ""}" />
+    <input name="genotype_reference_2" placeholder="Genotype Ref #2" value="${defaults.genotype_reference_2 || ""}" />
+    <select name="decision">
+      <option value="euthanise" ${defaults.decision !== "keep" ? "selected" : ""}>Euthanise</option>
+      <option value="keep" ${defaults.decision === "keep" ? "selected" : ""}>Keep</option>
+    </select>
+    <input name="assigned_external_id" placeholder="Assigned ID# if kept" value="${defaults.assigned_external_id || ""}" />
+    <input name="wean_date" type="date" value="${defaults.wean_date || ""}" />
+    <button type="button" class="link-button" data-remove-pup>Remove</button>
+  `;
+  pupRows.appendChild(row);
+}
+
+function collectPups() {
+  return [...pupRows.querySelectorAll(".pup-row")]
+    .map((row) => {
+      const fields = Object.fromEntries(
+        [...row.querySelectorAll("input, select")].map((input) => [input.name, input.value]),
+      );
+      return {
+        pup_label: nullable(fields.pup_label),
+        assigned_external_id: nullable(fields.assigned_external_id),
+        sex: fields.sex,
+        wean_date: nullable(fields.wean_date),
+        genotype: nullable(fields.genotype),
+        genotype_reference_1: nullable(fields.genotype_reference_1),
+        genotype_reference_2: nullable(fields.genotype_reference_2),
+        decision: fields.decision,
+      };
+    })
+    .filter((pup) => pup.pup_label || pup.assigned_external_id || pup.genotype);
 }
 
 async function loadData() {
@@ -280,6 +325,29 @@ mouseForm.addEventListener("submit", async (event) => {
   await loadData();
 });
 
+importForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const file = importForm.elements.file.files[0];
+  const data = new FormData();
+  data.append("file", file);
+
+  const response = await fetch(`${API_BASE}/mice/import.xlsx`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${authToken}` },
+    body: data,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Import failed");
+  }
+
+  const result = await response.json();
+  importForm.reset();
+  showStatus(`Imported ${result.imported} mice`);
+  await loadData();
+});
+
 assignForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = formPayload(assignForm);
@@ -303,12 +371,7 @@ matingForm.addEventListener("submit", async (event) => {
   payload.male_pups = optionalNumber(payload.male_pups);
   payload.female_pups = optionalNumber(payload.female_pups);
   payload.pup_genotypes = nullable(payload.pup_genotypes);
-  payload.genotyping_reference = nullable(payload.genotyping_reference);
-  payload.keep_litter = Boolean(payload.keep_litter);
-  payload.euthanise_litter = Boolean(payload.euthanise_litter);
-  payload.kept_male_pups = optionalNumber(payload.kept_male_pups);
-  payload.kept_female_pups = optionalNumber(payload.kept_female_pups);
-  payload.kept_pup_genotype = nullable(payload.kept_pup_genotype);
+  payload.pups = collectPups();
   payload.notes = nullable(payload.notes);
 
   await request("/matings/", {
@@ -317,8 +380,19 @@ matingForm.addEventListener("submit", async (event) => {
   });
 
   matingForm.reset();
+  pupRows.innerHTML = "";
   showStatus("Mating recorded");
   await loadData();
+});
+
+addPupButton.addEventListener("click", () => {
+  addPupRow();
+});
+
+pupRows.addEventListener("click", (event) => {
+  if (event.target.closest("[data-remove-pup]")) {
+    event.target.closest(".pup-row").remove();
+  }
 });
 
 analysisForm.addEventListener("submit", async (event) => {
@@ -377,6 +451,23 @@ exportButton.addEventListener("click", async () => {
   const link = document.createElement("a");
   link.href = url;
   link.download = "mice_cage_list.xlsx";
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+exportLitterHistoryButton.addEventListener("click", async () => {
+  const response = await fetch(`${API_BASE}/matings/litter-history/export.xlsx`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!response.ok) {
+    throw new Error("Litter history export failed");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "litter_history.xlsx";
   link.click();
   URL.revokeObjectURL(url);
 });

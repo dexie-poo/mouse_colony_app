@@ -9,6 +9,7 @@ class Mouse(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    external_id = Column(String, nullable=True, index=True)
     genotype = Column(String, nullable=False)
     gender = Column(String, nullable=False)
     owner = Column(String, nullable=True)

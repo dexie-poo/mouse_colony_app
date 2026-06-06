@@ -118,6 +118,33 @@ label {
   width: auto;
 }
 
+.section-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-heading h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.pup-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.pup-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 10px;
+}
+
 input,
 select,
 textarea {
@@ -253,7 +280,8 @@ th {
 
   .layout,
   .form-grid,
-  .auth-panel {
+  .auth-panel,
+  .pup-row {
     grid-template-columns: 1fr;
   }
 

@@ -10,7 +10,7 @@
     <header class="app-header">
       <div>
         <h1>Mouse Colony Manager</h1>
-        <p>V3.0 user colonies, litters, and analysis records</p>
+        <p>V3.1.1 user colonies, imports, litters, and analysis records</p>
       </div>
       <div class="header-actions">
         <span id="currentUserLabel"></span>
@@ -90,6 +90,17 @@
       </section>
 
       <section class="panel">
+        <h2>Import Mice</h2>
+        <form id="importForm" class="form-grid">
+          <label class="wide">
+            Excel File
+            <input name="file" type="file" accept=".xlsx,.xlsm" required />
+          </label>
+          <button type="submit">Import Mice</button>
+        </form>
+      </section>
+
+      <section class="panel">
         <h2>Assign Cage Number</h2>
         <form id="assignForm" class="form-grid">
           <label>
@@ -140,30 +151,13 @@
             Pup Genotypes
             <textarea name="pup_genotypes" rows="3" placeholder="e.g. WT: 3M/2F; Het: 1M/2F"></textarea>
           </label>
-          <label>
-            Genotyping Reference
-            <input name="genotyping_reference" placeholder="e.g. gel image, plate ID" />
-          </label>
-          <label class="checkbox-label">
-            <input name="keep_litter" type="checkbox" />
-            Keep litter
-          </label>
-          <label class="checkbox-label">
-            <input name="euthanise_litter" type="checkbox" />
-            Euthanise litter
-          </label>
-          <label>
-            Kept Male Pups
-            <input name="kept_male_pups" inputmode="numeric" />
-          </label>
-          <label>
-            Kept Female Pups
-            <input name="kept_female_pups" inputmode="numeric" />
-          </label>
-          <label class="wide">
-            Kept Pup Genotype
-            <input name="kept_pup_genotype" placeholder="Genotype assigned to created mouse records" />
-          </label>
+          <div class="wide">
+            <div class="section-heading">
+              <h3>Individual Pups</h3>
+              <button id="addPupButton" type="button">Add Pup</button>
+            </div>
+            <div id="pupRows" class="pup-rows"></div>
+          </div>
           <label class="wide">
             Notes
             <textarea name="notes" rows="3"></textarea>
@@ -178,6 +172,7 @@
           Mouse
           <select id="historyMouseSelect"></select>
         </label>
+        <button id="exportLitterHistoryButton" type="button">Export Litter History</button>
         <div id="matingHistory" class="history-list"></div>
       </section>
 

@@ -4,3 +4,5 @@ sqlalchemy
 psycopg[binary]
 pydantic>=2
 httpx2
+openpyxl
+python-multipart

@@ -6,6 +6,7 @@ from .cage import CageRead
 
 
 class MouseBase(BaseModel):
+    external_id: str | None = None
     genotype: str
     gender: str
     dob: date | None = None

@@ -10,15 +10,49 @@
     <header class="app-header">
       <div>
         <h1>Mouse Colony Manager</h1>
-        <p>V2 colony records, cage numbers, and mating history</p>
+        <p>V3.0 user colonies, litters, and analysis records</p>
       </div>
       <div class="header-actions">
+        <span id="currentUserLabel"></span>
+        <button id="logoutButton" type="button">Logout</button>
         <button id="exportButton" type="button">Export Excel</button>
         <button id="refreshButton" type="button">Refresh</button>
       </div>
     </header>
 
-    <main class="layout">
+    <section id="authPanel" class="auth-panel">
+      <div class="panel auth-card">
+        <h2>Login</h2>
+        <form id="loginForm" class="form-grid">
+          <label>
+            User ID
+            <input name="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" required />
+          </label>
+          <button type="submit">Login</button>
+        </form>
+      </div>
+
+      <div class="panel auth-card">
+        <h2>Create User</h2>
+        <form id="registerForm" class="form-grid">
+          <label>
+            User ID
+            <input name="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" required />
+          </label>
+          <button type="submit">Create User</button>
+        </form>
+      </div>
+    </section>
+
+    <main id="appContent" class="layout hidden">
       <section class="panel">
         <h2>Add Mouse</h2>
         <form id="mouseForm" class="form-grid">
@@ -106,6 +140,30 @@
             Pup Genotypes
             <textarea name="pup_genotypes" rows="3" placeholder="e.g. WT: 3M/2F; Het: 1M/2F"></textarea>
           </label>
+          <label>
+            Genotyping Reference
+            <input name="genotyping_reference" placeholder="e.g. gel image, plate ID" />
+          </label>
+          <label class="checkbox-label">
+            <input name="keep_litter" type="checkbox" />
+            Keep litter
+          </label>
+          <label class="checkbox-label">
+            <input name="euthanise_litter" type="checkbox" />
+            Euthanise litter
+          </label>
+          <label>
+            Kept Male Pups
+            <input name="kept_male_pups" inputmode="numeric" />
+          </label>
+          <label>
+            Kept Female Pups
+            <input name="kept_female_pups" inputmode="numeric" />
+          </label>
+          <label class="wide">
+            Kept Pup Genotype
+            <input name="kept_pup_genotype" placeholder="Genotype assigned to created mouse records" />
+          </label>
           <label class="wide">
             Notes
             <textarea name="notes" rows="3"></textarea>
@@ -123,6 +181,51 @@
         <div id="matingHistory" class="history-list"></div>
       </section>
 
+      <section class="panel">
+        <h2>Analysis</h2>
+        <form id="analysisForm" class="form-grid">
+          <label>
+            Mouse
+            <select name="mouse_id" id="analysisMouseSelect" required></select>
+          </label>
+          <label>
+            Sacrifice Date
+            <input name="sacrifice_date" type="date" />
+          </label>
+          <label>
+            Age at Sacrifice
+            <input name="age_at_sacrifice" placeholder="e.g. 12 months" />
+          </label>
+          <label>
+            Preservation
+            <select name="preservation_method">
+              <option value="">Select</option>
+              <option value="FFPE">FFPE</option>
+              <option value="OCT">OCT</option>
+              <option value="Fresh frozen">Fresh frozen</option>
+            </select>
+          </label>
+          <label class="wide">
+            Organs Extracted
+            <textarea name="organs_extracted" rows="3"></textarea>
+          </label>
+          <label class="wide">
+            Organ Conditions
+            <textarea name="organ_conditions" rows="3"></textarea>
+          </label>
+          <label class="wide">
+            Picture
+            <input name="image" type="file" accept="image/*" />
+          </label>
+          <label class="wide">
+            Notes
+            <textarea name="notes" rows="3"></textarea>
+          </label>
+          <button type="submit">Record Analysis</button>
+        </form>
+        <div id="analysisList" class="history-list"></div>
+      </section>
+
       <section class="panel table-panel">
         <h2>Mouse Table</h2>
         <div class="table-wrap">
@@ -137,6 +240,7 @@
                 <th>Owner</th>
                 <th>Remark</th>
                 <th>Cage Number</th>
+                <th>Sacrificed</th>
                 <th>Mating</th>
               </tr>
             </thead>

@@ -12,6 +12,12 @@ class MatingBase(BaseModel):
     male_pups: int | None = None
     female_pups: int | None = None
     pup_genotypes: str | None = None
+    genotyping_reference: str | None = None
+    keep_litter: bool | None = False
+    euthanise_litter: bool | None = False
+    kept_male_pups: int | None = None
+    kept_female_pups: int | None = None
+    kept_pup_genotype: str | None = None
     notes: str | None = None
 
     @model_validator(mode="after")
@@ -36,6 +42,7 @@ class MatingCreate(MatingBase):
 
 class MatingRead(MatingBase):
     id: int
+    kept_mouse_ids: str | None = None
 
     class Config:
         from_attributes = True

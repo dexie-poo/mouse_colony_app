@@ -1,6 +1,6 @@
 ﻿# Mouse Colony App
 
-V2 mouse colony management web application using FastAPI, SQLite or Supabase Postgres, SQLAlchemy, and a lightweight browser frontend.
+V3.0 mouse colony management web application using FastAPI, SQLite or Supabase Postgres, SQLAlchemy, and a lightweight browser frontend.
 
 ## Project Structure
 
@@ -14,19 +14,25 @@ mouse_colony_app/
       main.py
       models/
         __init__.py
+        analysis.py
         cage.py
         mating.py
         mouse.py
+        user.py
       routes/
         __init__.py
+        analyses.py
+        auth.py
         cages.py
         matings.py
         mice.py
       schemas/
         __init__.py
+        analysis.py
         cage.py
         mating.py
         mouse.py
+        user.py
   frontend/
     index.html
     styles.css
@@ -38,12 +44,17 @@ mouse_colony_app/
 
 ## Features
 
+- Simple user login and user creation
+- Separate mouse colony data per user
 - Add mouse
 - View mouse table
 - Assign mouse to cage number
 - Export current mouse cage list to Excel
 - Record mating pairs
 - View mating history for any mouse
+- Keep or euthanise litters
+- Auto-create mouse records for kept pups
+- Record sacrifice and organ analysis information
 
 Mouse identifiers:
 
@@ -70,11 +81,25 @@ Mating records include:
 - Male pups
 - Female pups
 - Pup genotypes
+- Genotyping reference
+- Keep/euthanise decision
+- Kept pup counts
+- Auto-created kept mouse IDs
 - Notes
 
-## V2 Database Note
+Analysis records include:
 
-If you previously ran V1 locally, delete the old SQLite file before running V2:
+- Mouse sacrifice date
+- Age at sacrifice
+- Organs extracted
+- Organ conditions
+- Picture upload
+- Preservation method: FFPE, OCT, or fresh frozen
+- Notes
+
+## V3 Database Note
+
+If you previously ran an older local version, delete the old SQLite file before running V3:
 
 ```powershell
 Remove-Item backend\mouse_colony.db -ErrorAction SilentlyContinue

@@ -8,6 +8,7 @@ class Mouse(Base):
     __tablename__ = "mice"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     genotype = Column(String, nullable=False)
     gender = Column(String, nullable=False)
     owner = Column(String, nullable=True)
@@ -15,8 +16,11 @@ class Mouse(Base):
     age_months = Column(String, nullable=True)
     remark = Column(Text, nullable=True)
     cage_id = Column(Integer, ForeignKey("cages.id"), nullable=True)
+    sacrificed = Column(String, nullable=True)
 
+    user = relationship("User", back_populates="mice")
     cage = relationship("Cage", back_populates="mice")
+    analyses = relationship("Analysis", back_populates="mouse")
     sire_matings = relationship(
         "Mating",
         back_populates="sire",

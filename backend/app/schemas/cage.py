@@ -11,6 +11,7 @@ class CageCreate(CageBase):
 
 class CageRead(CageBase):
     id: int
+    user_id: int
 
     class Config:
         from_attributes = True

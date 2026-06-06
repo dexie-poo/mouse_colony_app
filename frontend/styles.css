@@ -47,8 +47,31 @@ textarea {
 }
 
 .header-actions {
+  align-items: center;
   display: flex;
   gap: 10px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 420px));
+  justify-content: center;
+  padding: 28px;
+}
+
+.auth-card .form-grid {
+  grid-template-columns: 1fr;
+}
+
+#currentUserLabel {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .layout {
@@ -82,6 +105,17 @@ label {
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
+}
+
+.checkbox-label {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.checkbox-label input {
+  min-height: auto;
+  width: auto;
 }
 
 input,
@@ -177,6 +211,14 @@ th {
   margin: 0;
 }
 
+.analysis-image {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 180px;
+  max-width: 260px;
+  object-fit: contain;
+}
+
 .status {
   bottom: 16px;
   left: 50%;
@@ -210,7 +252,8 @@ th {
   }
 
   .layout,
-  .form-grid {
+  .form-grid,
+  .auth-panel {
     grid-template-columns: 1fr;
   }
 

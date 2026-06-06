@@ -26,6 +26,8 @@ class MouseUpdate(MouseBase):
 
 class MouseRead(MouseBase):
     id: int
+    user_id: int
+    sacrificed: str | None = None
     cage: CageRead | None = None
 
     class Config:

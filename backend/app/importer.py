@@ -148,6 +148,10 @@ def get_or_create_cage(db: Session, cage_number: str | None, user_id: int):
     if cage:
         return cage
 
+    cage = db.query(Cage).filter(Cage.cage_number == cage_number).first()
+    if cage:
+        return cage
+
     cage = Cage(cage_number=cage_number, user_id=user_id)
     db.add(cage)
     db.flush()

@@ -3,14 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mouse Colony Manager</title>
+    <title>Where's My Mouse</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
     <header class="app-header">
       <div>
-        <h1>Mouse Colony Manager</h1>
-        <p>V3.1.1 user colonies, imports, litters, and analysis records</p>
+        <h1>Where's My Mouse</h1>
       </div>
       <div class="header-actions">
         <span id="currentUserLabel"></span>
@@ -55,9 +54,9 @@
     <main id="appContent" class="app-main hidden">
       <nav class="tabs" aria-label="Application sections">
         <button class="tab-button active" type="button" data-tab="mice">Mice</button>
-        <button class="tab-button" type="button" data-tab="cages">Cages</button>
         <button class="tab-button" type="button" data-tab="mating">Mating</button>
         <button class="tab-button" type="button" data-tab="analysis">Analysis</button>
+        <button class="tab-button" type="button" data-tab="sacrifice">Sacrifice History</button>
       </nav>
 
       <div class="layout">
@@ -82,8 +81,17 @@
             <input name="dob" type="date" />
           </label>
           <label>
+            Mice Color
+            <input name="color" placeholder="Black" />
+            <span class="field-note">Defaults to black if left blank.</span>
+          </label>
+          <label>
             Owner
             <input name="owner" />
+          </label>
+          <label>
+            Purpose
+            <input name="purpose" />
           </label>
           <label>
             Cage Number
@@ -105,26 +113,6 @@
             <input name="file" type="file" accept=".xlsx,.xlsm" required />
           </label>
           <button type="submit">Import Mice</button>
-        </form>
-      </section>
-
-      <section class="panel tab-panel hidden" data-tab-panel="cages">
-        <h2>Assign Cage Number</h2>
-        <form id="assignForm" class="form-grid">
-          <label class="wide">
-            Search Mouse ID
-            <input id="assignMouseSearchInput" placeholder="Type mouse ID, genotype, or gender" />
-          </label>
-          <label>
-            Mouse
-            <select name="mouse_id" id="assignMouseSelect" required></select>
-          </label>
-          <label>
-            Cage Number
-            <input name="cage_number" list="cageNumbers" required />
-            <datalist id="cageNumbers"></datalist>
-          </label>
-          <button type="submit">Transfer</button>
         </form>
       </section>
 
@@ -237,13 +225,17 @@
           </label>
           <button type="submit">Record Analysis</button>
         </form>
+      </section>
+
+      <section class="panel tab-panel hidden" data-tab-panel="sacrifice">
+        <h2>Sacrifice History</h2>
         <div class="analysis-search">
           <label>
-            Search Analysed Mice
+            Search Sacrificed Mice
             <input id="analysisSearchInput" placeholder="Mouse ID, genotype, organ, condition, notes" />
           </label>
           <label>
-            Analysed Mouse
+            Sacrificed Mouse
             <select id="analysisRecordMouseSelect"></select>
           </label>
           <button id="clearAnalysisSearchButton" type="button">Clear</button>
@@ -253,19 +245,20 @@
 
       <section class="panel table-panel tab-panel" data-tab-panel="mice">
         <h2>Mouse Table</h2>
+        <datalist id="cageNumbers"></datalist>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>MiceID</th>
-                <th>Gender</th>
-                <th>DOB</th>
-                <th>Age (Months)</th>
-                <th>Genotype</th>
-                <th>Owner</th>
-                <th>Remark</th>
-                <th>Cage Number</th>
-                <th>Sacrificed</th>
+                <th><button type="button" class="sort-button" data-sort-key="external_id">ID#</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="retag">Retag</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="gender">Sex</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="color">Color</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="age_months">Age (Months)</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="genotype">Genotype</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="purpose">Purpose</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="cage">Barcodes</button></th>
+                <th>Actions</th>
                 <th>Mating</th>
               </tr>
             </thead>
@@ -277,7 +270,8 @@
     </main>
 
     <footer class="app-footer">
-      <strong>Contact</strong>
+      <strong>Where's My Mouse</strong>
+      <span>Build V3.1.1 user colonies, imports, litters, analysis records, and live cage lists</span>
       <span>Developed by Dexter</span>
       <a href="mailto:dexter.leung@nyulangone.org">dexter.leung@nyulangone.org</a>
     </footer>

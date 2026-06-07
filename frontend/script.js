@@ -7,8 +7,6 @@ const loginForm = document.querySelector("#loginForm");
 const registerForm = document.querySelector("#registerForm");
 const importForm = document.querySelector("#importForm");
 const mouseForm = document.querySelector("#mouseForm");
-const assignForm = document.querySelector("#assignForm");
-const assignMouseSearchInput = document.querySelector("#assignMouseSearchInput");
 const matingForm = document.querySelector("#matingForm");
 const addPupButton = document.querySelector("#addPupButton");
 const pupRows = document.querySelector("#pupRows");
@@ -24,7 +22,6 @@ const exportButton = document.querySelector("#exportButton");
 const exportLitterHistoryButton = document.querySelector("#exportLitterHistoryButton");
 const refreshButton = document.querySelector("#refreshButton");
 const mouseTableBody = document.querySelector("#mouseTableBody");
-const assignMouseSelect = document.querySelector("#assignMouseSelect");
 const sireSelect = document.querySelector("#sireSelect");
 const damSelect = document.querySelector("#damSelect");
 const historyMouseSelect = document.querySelector("#historyMouseSelect");
@@ -41,6 +38,7 @@ let cages = [];
 let matings = [];
 let analyses = [];
 let displayedAnalyses = [];
+let mouseSort = { key: "external_id", direction: "asc" };
 let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
 
@@ -58,6 +56,15 @@ function nullable(value) {
 
 function optionalNumber(value) {
   return value === "" ? null : Number(value);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function formPayload(form) {
@@ -121,6 +128,15 @@ function renderAuthState() {
   currentUserLabel.textContent = currentUser ? currentUser.username : "";
 }
 
+function showAuthLoadingState() {
+  authPanel.classList.remove("hidden");
+  appContent.classList.add("hidden");
+  exportButton.classList.add("hidden");
+  refreshButton.classList.add("hidden");
+  logoutButton.classList.add("hidden");
+  currentUserLabel.textContent = currentUser ? currentUser.username : "";
+}
+
 async function fileToDataUrl(file) {
   if (!file) {
     return null;
@@ -140,6 +156,36 @@ function mouseLabel(mouse) {
 
 function cageNumber(mouse) {
   return mouse.cage ? mouse.cage.cage_number : "";
+}
+
+function sortValue(mouse, key) {
+  if (key === "cage") {
+    return cageNumber(mouse);
+  }
+  if (key === "age_months") {
+    return Number(mouse.age_months ?? -1);
+  }
+  if (key === "external_id") {
+    return mouse.external_id || mouse.id;
+  }
+  return mouse[key] || "";
+}
+
+function sortedMice() {
+  return [...mice].sort((a, b) => {
+    const left = sortValue(a, mouseSort.key);
+    const right = sortValue(b, mouseSort.key);
+    const direction = mouseSort.direction === "asc" ? 1 : -1;
+
+    if (typeof left === "number" && typeof right === "number") {
+      return (left - right) * direction;
+    }
+
+    return String(left).localeCompare(String(right), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    }) * direction;
+  });
 }
 
 function searchableMouseText(mouse) {
@@ -169,18 +215,17 @@ function renderMouseSelect(select, placeholder = "Select mouse", filterText = ""
 }
 
 function renderControls() {
-  renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
   renderMouseSelect(sireSelect, "Select sire");
   renderMouseSelect(damSelect, "Select dam");
   renderMouseSelect(historyMouseSelect);
   renderMouseSelect(analysisMouseSelect);
 
-  const analysedMouseIds = new Set(analyses.map((analysis) => analysis.mouse_id));
+  const analysedMice = analyses
+    .map((analysis) => analysis.mouse)
+    .filter(Boolean);
   analysisRecordMouseSelect.innerHTML = [
-    `<option value="">All analysed mice</option>`,
-    ...mice
-      .filter((mouse) => analysedMouseIds.has(mouse.id))
-      .map((mouse) => `<option value="${mouse.id}">${mouseLabel(mouse)}</option>`),
+    `<option value="">All sacrificed mice</option>`,
+    ...analysedMice.map((mouse) => `<option value="${mouse.id}">${escapeHtml(mouseLabel(mouse))}</option>`),
   ].join("");
 
   cageNumbers.innerHTML = cages
@@ -189,19 +234,27 @@ function renderControls() {
 }
 
 function renderMouseTable() {
-  mouseTableBody.innerHTML = mice
+  mouseTableBody.innerHTML = sortedMice()
     .map((mouse) => {
+      const displayId = mouse.external_id || mouse.id;
       return `
         <tr>
-          <td>${mouse.external_id || mouse.id}</td>
-          <td>${mouse.gender}</td>
-          <td>${mouse.dob || ""}</td>
-          <td>${mouse.age_months || ""}</td>
-          <td>${mouse.genotype}</td>
-          <td>${mouse.owner || ""}</td>
-          <td>${mouse.remark || ""}</td>
-          <td>${cageNumber(mouse) || "Unassigned"}</td>
-          <td>${mouse.sacrificed || ""}</td>
+          <td>${escapeHtml(displayId)}</td>
+          <td>
+            <input class="table-input" data-retag-input="${mouse.id}" value="${escapeHtml(mouse.retag || "")}" placeholder="New tag" />
+          </td>
+          <td>${escapeHtml(mouse.gender)}</td>
+          <td>${escapeHtml(mouse.color || "Black")}</td>
+          <td>${escapeHtml(mouse.age_months || "")}</td>
+          <td>${escapeHtml(mouse.genotype)}</td>
+          <td>${escapeHtml(mouse.purpose || "")}</td>
+          <td>
+            <input class="table-input" data-cage-input="${mouse.id}" list="cageNumbers" value="${escapeHtml(cageNumber(mouse) || "")}" placeholder="Unassigned" />
+          </td>
+          <td class="table-actions">
+            <button type="button" class="link-button" data-save-retag="${mouse.id}">Save Retag</button>
+            <button type="button" class="link-button" data-transfer-id="${mouse.id}">Transfer</button>
+          </td>
           <td><button type="button" class="link-button" data-history-id="${mouse.id}">History</button></td>
         </tr>
       `;
@@ -278,18 +331,25 @@ function renderAnalyses(records = displayedAnalyses) {
 
   analysisList.innerHTML = records
     .map((analysis) => {
-      const mouse = mice.find((item) => item.id === analysis.mouse_id);
+      const mouse = analysis.mouse || mice.find((item) => item.id === analysis.mouse_id);
       const image = analysis.image_data
         ? `<img class="analysis-image" src="${analysis.image_data}" alt="${analysis.image_filename || "analysis image"}" />`
         : "";
       return `
         <article class="history-item">
-          <strong>${mouse ? mouseLabel(mouse) : `Mouse #${analysis.mouse_id}`} sacrificed ${analysis.sacrifice_date || ""}</strong>
-          <span>Age at sacrifice: ${analysis.age_at_sacrifice || ""}</span>
-          <span>Organs: ${analysis.organs_extracted || ""}</span>
-          <span>Conditions: ${analysis.organ_conditions || ""}</span>
-          <span>Preservation: ${analysis.preservation_method || ""}</span>
-          <span>${analysis.notes || ""}</span>
+          <strong>${escapeHtml(mouse ? mouseLabel(mouse) : `Mouse #${analysis.mouse_id}`)} sacrificed ${escapeHtml(analysis.sacrifice_date || "")}</strong>
+          <span>Age at sacrifice: ${escapeHtml(analysis.age_at_sacrifice || "")}</span>
+          <span>Sex: ${escapeHtml(mouse?.gender || "")}</span>
+          <span>Color: ${escapeHtml(mouse?.color || "Black")}</span>
+          <span>DOB: ${escapeHtml(mouse?.dob || "")}</span>
+          <span>Genotype: ${escapeHtml(mouse?.genotype || "")}</span>
+          <span>Owner: ${escapeHtml(mouse?.owner || "")}</span>
+          <span>Purpose: ${escapeHtml(mouse?.purpose || "")}</span>
+          <span>Barcodes: ${escapeHtml(cageNumber(mouse || {}) || "")}</span>
+          <span>Organs: ${escapeHtml(analysis.organs_extracted || "")}</span>
+          <span>Conditions: ${escapeHtml(analysis.organ_conditions || "")}</span>
+          <span>Preservation: ${escapeHtml(analysis.preservation_method || "")}</span>
+          <span>${escapeHtml(analysis.notes || "")}</span>
           ${image}
         </article>
       `;
@@ -365,14 +425,19 @@ async function loadData() {
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = formPayload(loginForm);
-  const result = await request("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-  setAuth(result.token, result.user);
-  loginForm.reset();
-  showStatus("Logged in");
-  await loadData();
+  try {
+    const result = await request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    setAuth(result.token, result.user);
+    loginForm.reset();
+    showStatus("Logged in");
+    await loadData();
+  } catch (error) {
+    window.alert("Wrong username or password. Please check the User ID and try again.");
+    showStatus(error.message);
+  }
 });
 
 registerForm.addEventListener("submit", async (event) => {
@@ -390,7 +455,9 @@ mouseForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = formPayload(mouseForm);
   payload.dob = nullable(payload.dob);
+  payload.color = nullable(payload.color) || "Black";
   payload.owner = nullable(payload.owner);
+  payload.purpose = nullable(payload.purpose);
   payload.remark = nullable(payload.remark);
   payload.cage_number = nullable(payload.cage_number);
 
@@ -424,18 +491,6 @@ importForm.addEventListener("submit", async (event) => {
   const result = await response.json();
   importForm.reset();
   showStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`);
-  await loadData();
-});
-
-assignForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const payload = formPayload(assignForm);
-  await request(`/mice/${payload.mouse_id}/assign-cage/${encodeURIComponent(payload.cage_number)}`, {
-    method: "POST",
-  });
-
-  assignForm.reset();
-  showStatus("Mouse transferred to cage");
   await loadData();
 });
 
@@ -539,10 +594,6 @@ clearMatingHistorySearchButton.addEventListener("click", () => {
   renderMatingHistory();
 });
 
-assignMouseSearchInput.addEventListener("input", () => {
-  renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
-});
-
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     showTab(button.dataset.tab);
@@ -550,6 +601,51 @@ tabButtons.forEach((button) => {
 });
 
 mouseTableBody.addEventListener("click", (event) => {
+  const sortButton = event.target.closest("[data-sort-key]");
+  if (sortButton) {
+    const key = sortButton.dataset.sortKey;
+    mouseSort = {
+      key,
+      direction: mouseSort.key === key && mouseSort.direction === "asc" ? "desc" : "asc",
+    };
+    renderMouseTable();
+    return;
+  }
+
+  const transferButton = event.target.closest("[data-transfer-id]");
+  if (transferButton) {
+    const mouseId = transferButton.dataset.transferId;
+    const input = mouseTableBody.querySelector(`[data-cage-input="${mouseId}"]`);
+    const cage = input.value.trim();
+    if (!cage) {
+      showStatus("Enter a cage number before transfer");
+      return;
+    }
+    request(`/mice/${mouseId}/assign-cage/${encodeURIComponent(cage)}`, { method: "POST" })
+      .then(async () => {
+        showStatus("Mouse transferred to cage");
+        await loadData();
+      })
+      .catch((error) => showStatus(error.message));
+    return;
+  }
+
+  const retagButton = event.target.closest("[data-save-retag]");
+  if (retagButton) {
+    const mouseId = retagButton.dataset.saveRetag;
+    const input = mouseTableBody.querySelector(`[data-retag-input="${mouseId}"]`);
+    request(`/mice/${mouseId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ retag: nullable(input.value.trim()) }),
+    })
+      .then(async () => {
+        showStatus("Mouse retag saved");
+        await loadData();
+      })
+      .catch((error) => showStatus(error.message));
+    return;
+  }
+
   const historyButton = event.target.closest("[data-history-id]");
   if (!historyButton) {
     return;
@@ -558,6 +654,17 @@ mouseTableBody.addEventListener("click", (event) => {
   historyMouseSelect.value = historyButton.dataset.historyId;
   showTab("mating");
   renderMatingHistory();
+});
+
+document.querySelectorAll(".sort-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const key = button.dataset.sortKey;
+    mouseSort = {
+      key,
+      direction: mouseSort.key === key && mouseSort.direction === "asc" ? "desc" : "asc",
+    };
+    renderMouseTable();
+  });
 });
 
 refreshButton.addEventListener("click", () => {
@@ -610,6 +717,7 @@ logoutButton.addEventListener("click", () => {
 renderAuthState();
 
 if (authToken) {
+  showAuthLoadingState();
   loadData().catch((error) => {
     clearAuth();
     showStatus(error.message);

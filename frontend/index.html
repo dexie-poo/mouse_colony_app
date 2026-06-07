@@ -102,9 +102,10 @@
         <form id="importForm" class="form-grid">
           <label class="wide">
             Excel File
-            <input name="file" type="file" accept=".xlsx,.xlsm" required />
+            <input id="importFileInput" name="file" type="file" accept=".xlsx,.xlsm" required />
           </label>
-          <button type="submit">Import Mice</button>
+          <button id="importButton" type="button">Import Mice</button>
+          <p id="importInlineStatus" class="inline-status wide"></p>
         </form>
       </section>
 

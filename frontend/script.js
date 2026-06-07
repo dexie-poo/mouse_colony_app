@@ -6,6 +6,9 @@ const appContent = document.querySelector("#appContent");
 const loginForm = document.querySelector("#loginForm");
 const registerForm = document.querySelector("#registerForm");
 const importForm = document.querySelector("#importForm");
+const importFileInput = document.querySelector("#importFileInput");
+const importButton = document.querySelector("#importButton");
+const importInlineStatus = document.querySelector("#importInlineStatus");
 const mouseForm = document.querySelector("#mouseForm");
 const assignForm = document.querySelector("#assignForm");
 const assignMouseSearchInput = document.querySelector("#assignMouseSearchInput");
@@ -43,6 +46,7 @@ let analyses = [];
 let displayedAnalyses = [];
 let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
+let importInProgress = false;
 
 function showStatus(message, timeout = 3500) {
   statusBox.textContent = message;
@@ -52,6 +56,11 @@ function showStatus(message, timeout = 3500) {
       statusBox.textContent = "";
     }, timeout);
   }
+}
+
+function showImportStatus(message, timeout = 3500) {
+  importInlineStatus.textContent = message;
+  showStatus(message, timeout);
 }
 
 function nullable(value) {
@@ -364,6 +373,50 @@ async function loadData() {
   renderAnalyses(displayedAnalyses);
 }
 
+async function importSelectedFile() {
+  if (importInProgress) {
+    return;
+  }
+
+  const file = importFileInput.files[0];
+  if (!file) {
+    showImportStatus("Please choose an Excel file first.");
+    return;
+  }
+
+  const data = new FormData();
+  data.append("file", file);
+
+  importInProgress = true;
+  importButton.disabled = true;
+  importButton.textContent = "Importing...";
+  showImportStatus(`Importing ${file.name}...`, null);
+
+  try {
+    const response = await fetch(`${API_BASE}/mice/import.xlsx`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: data,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Import failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    importForm.reset();
+    showImportStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`, 10000);
+    await loadData();
+  } catch (error) {
+    showImportStatus(`Import failed: ${error.message}`, 12000);
+  } finally {
+    importInProgress = false;
+    importButton.disabled = false;
+    importButton.textContent = "Import Mice";
+  }
+}
+
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = formPayload(loginForm);
@@ -408,42 +461,16 @@ mouseForm.addEventListener("submit", async (event) => {
 
 importForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const file = importForm.elements.file.files[0];
-  const submitButton = importForm.querySelector('button[type="submit"]');
-  if (!file) {
-    showStatus("Please choose an Excel file first.");
-    return;
-  }
+  await importSelectedFile();
+});
 
-  const data = new FormData();
-  data.append("file", file);
+importButton.addEventListener("click", async () => {
+  await importSelectedFile();
+});
 
-  submitButton.disabled = true;
-  submitButton.textContent = "Importing...";
-  showStatus(`Importing ${file.name}...`, null);
-
-  try {
-    const response = await fetch(`${API_BASE}/mice/import.xlsx`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${authToken}` },
-      body: data,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Import failed with status ${response.status}`);
-    }
-
-    const result = await response.json();
-    importForm.reset();
-    showStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`, 8000);
-    await loadData();
-  } catch (error) {
-    showStatus(`Import failed: ${error.message}`, 10000);
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = "Import Mice";
-  }
+importFileInput.addEventListener("change", () => {
+  const file = importFileInput.files[0];
+  importInlineStatus.textContent = file ? `Selected ${file.name}` : "";
 });
 
 assignForm.addEventListener("submit", async (event) => {

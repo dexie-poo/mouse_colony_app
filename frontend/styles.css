@@ -279,6 +279,13 @@ th {
   margin: 0;
 }
 
+.inline-status {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
 .analysis-image {
   border: 1px solid var(--line);
   border-radius: 8px;

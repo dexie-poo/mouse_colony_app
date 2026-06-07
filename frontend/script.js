@@ -44,12 +44,14 @@ let displayedAnalyses = [];
 let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
 
-function showStatus(message) {
+function showStatus(message, timeout = 3500) {
   statusBox.textContent = message;
   window.clearTimeout(showStatus.timeout);
-  showStatus.timeout = window.setTimeout(() => {
-    statusBox.textContent = "";
-  }, 3500);
+  if (timeout !== null) {
+    showStatus.timeout = window.setTimeout(() => {
+      statusBox.textContent = "";
+    }, timeout);
+  }
 }
 
 function nullable(value) {
@@ -407,24 +409,41 @@ mouseForm.addEventListener("submit", async (event) => {
 importForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const file = importForm.elements.file.files[0];
+  const submitButton = importForm.querySelector('button[type="submit"]');
+  if (!file) {
+    showStatus("Please choose an Excel file first.");
+    return;
+  }
+
   const data = new FormData();
   data.append("file", file);
 
-  const response = await fetch(`${API_BASE}/mice/import.xlsx`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${authToken}` },
-    body: data,
-  });
+  submitButton.disabled = true;
+  submitButton.textContent = "Importing...";
+  showStatus(`Importing ${file.name}...`, null);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || "Import failed");
+  try {
+    const response = await fetch(`${API_BASE}/mice/import.xlsx`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: data,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Import failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    importForm.reset();
+    showStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`, 8000);
+    await loadData();
+  } catch (error) {
+    showStatus(`Import failed: ${error.message}`, 10000);
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Import Mice";
   }
-
-  const result = await response.json();
-  importForm.reset();
-  showStatus(`Imported ${result.imported} mice. Matched: ${result.matched_fields.join(", ")}`);
-  await loadData();
 });
 
 assignForm.addEventListener("submit", async (event) => {
@@ -618,4 +637,9 @@ if (authToken) {
 
 window.addEventListener("error", (event) => {
   showStatus(event.message);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const message = event.reason instanceof Error ? event.reason.message : String(event.reason);
+  showStatus(message);
 });

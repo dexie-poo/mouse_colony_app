@@ -116,7 +116,14 @@ async def import_mice(
         raise HTTPException(status_code=400, detail="Please upload an Excel .xlsx file")
 
     content = await file.read()
-    return import_mice_from_xlsx(content, db, current_user)
+    try:
+        return import_mice_from_xlsx(content, db, current_user)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Import failed on server: {type(exc).__name__}: {exc}",
+        ) from exc
 
 
 @router.patch("/{mouse_id}", response_model=MouseRead)

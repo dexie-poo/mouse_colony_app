@@ -92,6 +92,8 @@ def map_header(value):
 def normalize_cell(value):
     if value is None:
         return None
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
     text = str(value).strip()
     return text or None
 

@@ -14,8 +14,8 @@ HEADER_ALIASES = {
     "id": "external_id",
     "new id# (retags)": "external_id",
     "new id# retags": "external_id",
-    "retag": "external_id",
-    "retags": "external_id",
+    "retag": "retag",
+    "retags": "retag",
     "mouse id": "external_id",
     "mouseid": "external_id",
     "mice id": "external_id",
@@ -38,6 +38,7 @@ HEADER_ALIASES = {
     "genotype reference 2": "genotype_reference_2",
     "genotype ref #2": "genotype_reference_2",
     "genotype ref 2": "genotype_reference_2",
+    "owner": "owner",
     "purpose": "purpose",
     "animal use (breeding/experimental)": "purpose",
     "animal use breeding/experimental": "purpose",
@@ -297,10 +298,6 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
 
             dob = parse_dob(values.get("dob"))
             remark_parts = []
-            if normalize_cell(values.get("color")):
-                remark_parts.append(f"Color: {normalize_cell(values.get('color'))}")
-            if normalize_cell(values.get("purpose")):
-                remark_parts.append(f"Purpose: {normalize_cell(values.get('purpose'))}")
             if normalize_cell(values.get("father")):
                 remark_parts.append(f"Father: {normalize_cell(values.get('father'))}")
             if normalize_cell(values.get("mother")):
@@ -325,11 +322,14 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
             mouse = Mouse(
                 user_id=current_user.id,
                 external_id=normalize_cell(values.get("external_id")),
+                retag=normalize_cell(values.get("retag")),
                 gender=normalize_gender(values.get("gender")),
+                color=normalize_cell(values.get("color")) or "Black",
                 dob=dob,
                 age_months=age_months,
                 genotype=genotype,
-                owner=current_user.username,
+                owner=normalize_cell(values.get("owner")) or current_user.username,
+                purpose=normalize_cell(values.get("purpose")),
                 remark="; ".join(remark_parts) or None,
             )
             if cage:

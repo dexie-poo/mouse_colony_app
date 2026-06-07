@@ -50,6 +50,13 @@ def calculate_age_months(dob: date | None):
     return str(max(months, 0))
 
 
+def live_mice_query(db: Session, user_id: int):
+    return db.query(Mouse).filter(
+        Mouse.user_id == user_id,
+        (Mouse.sacrificed.is_(None) | (Mouse.sacrificed == "")),
+    )
+
+
 def update_display_ages(mice: list[Mouse]):
     for mouse in mice:
         mouse.age_months = calculate_age_months(mouse.dob)
@@ -64,6 +71,7 @@ def create_mouse(
 ):
     payload = mouse.model_dump()
     cage_number = payload.pop("cage_number", None)
+    payload["color"] = payload.get("color") or "Black"
     payload["age_months"] = calculate_age_months(payload.get("dob"))
     cage = get_or_create_cage(db, cage_number, current_user.id)
 
@@ -82,12 +90,7 @@ def list_mice(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    mice = (
-        db.query(Mouse)
-        .filter(Mouse.user_id == current_user.id)
-        .order_by(Mouse.id)
-        .all()
-    )
+    mice = live_mice_query(db, current_user.id).order_by(Mouse.id).all()
     return update_display_ages(mice)
 
 
@@ -96,12 +99,7 @@ def export_mice(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    mice = (
-        db.query(Mouse)
-        .filter(Mouse.user_id == current_user.id)
-        .order_by(Mouse.id)
-        .all()
-    )
+    mice = live_mice_query(db, current_user.id).order_by(Mouse.id).all()
     workbook = build_mouse_export_xlsx(update_display_ages(mice))
     return StreamingResponse(
         workbook,
@@ -149,6 +147,8 @@ def update_mouse(
     cage_number = updates.pop("cage_number", None)
     if "dob" in updates:
         updates["age_months"] = calculate_age_months(updates["dob"])
+    if "color" in updates and not updates["color"]:
+        updates["color"] = "Black"
 
     for field, value in updates.items():
         setattr(db_mouse, field, value)

@@ -52,7 +52,11 @@ def list_analyses(
         query = query.filter(
             or_(
                 Mouse.external_id.ilike(pattern),
+                Mouse.retag.ilike(pattern),
                 Mouse.genotype.ilike(pattern),
+                Mouse.color.ilike(pattern),
+                Mouse.owner.ilike(pattern),
+                Mouse.purpose.ilike(pattern),
                 Mouse.remark.ilike(pattern),
                 Analysis.organs_extracted.ilike(pattern),
                 Analysis.organ_conditions.ilike(pattern),

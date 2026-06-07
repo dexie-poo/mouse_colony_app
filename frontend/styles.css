@@ -133,12 +133,6 @@ label {
   font-weight: 700;
 }
 
-.field-note {
-  color: #8b968f;
-  font-size: 12px;
-  font-weight: 400;
-}
-
 .checkbox-label {
   align-items: center;
   display: flex;
@@ -218,32 +212,6 @@ button:hover {
   background: transparent;
   color: var(--accent-dark);
   text-decoration: underline;
-}
-
-.sort-button {
-  background: transparent;
-  color: var(--muted);
-  min-height: auto;
-  padding: 0;
-  text-align: left;
-  text-transform: uppercase;
-}
-
-.sort-button:hover {
-  background: transparent;
-  color: var(--accent-dark);
-  text-decoration: underline;
-}
-
-.table-input {
-  min-height: 32px;
-  min-width: 110px;
-  padding: 6px 8px;
-}
-
-.table-actions {
-  display: grid;
-  gap: 6px;
 }
 
 .wide,

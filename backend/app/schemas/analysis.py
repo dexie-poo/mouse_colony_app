@@ -2,8 +2,6 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from .mouse import MouseRead
-
 
 class AnalysisBase(BaseModel):
     mouse_id: int
@@ -24,7 +22,6 @@ class AnalysisCreate(AnalysisBase):
 class AnalysisRead(AnalysisBase):
     id: int
     user_id: int
-    mouse: MouseRead | None = None
 
     class Config:
         from_attributes = True

@@ -7,17 +7,14 @@ from .models.mouse import Mouse
 
 
 EXPORT_COLUMNS = [
-    "ID#",
-    "Retag",
-    "Sex",
-    "Color",
+    "MiceID",
+    "Gender",
     "DOB",
-    "Age (Days)",
     "Age (Months)",
     "Genotype",
     "Owner",
-    "Purpose",
-    "Barcodes",
+    "Remark",
+    "Cage Number",
 ]
 
 
@@ -49,21 +46,14 @@ def row_xml(row_index: int, values):
 
 
 def mouse_export_row(mouse: Mouse):
-    age_days = ""
-    if mouse.dob:
-        age_days = max((date.today() - mouse.dob).days, 0)
-
     return [
         mouse.external_id or mouse.id,
-        mouse.retag,
         mouse.gender,
-        mouse.color or "Black",
         mouse.dob,
-        age_days,
         mouse.age_months,
         mouse.genotype,
         mouse.owner,
-        mouse.purpose,
+        mouse.remark,
         mouse.cage_number,
     ]
 

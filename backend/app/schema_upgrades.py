@@ -8,9 +8,6 @@ V3_COLUMNS = {
     "mice": {
         "user_id": "INTEGER",
         "external_id": "VARCHAR",
-        "retag": "VARCHAR",
-        "color": "VARCHAR",
-        "purpose": "VARCHAR",
         "sacrificed": "VARCHAR",
     },
     "matings": {

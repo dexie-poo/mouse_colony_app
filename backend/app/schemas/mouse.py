@@ -7,14 +7,11 @@ from .cage import CageRead
 
 class MouseBase(BaseModel):
     external_id: str | None = None
-    retag: str | None = None
     genotype: str
     gender: str
-    color: str | None = None
     dob: date | None = None
     age_months: str | None = None
     owner: str | None = None
-    purpose: str | None = None
     remark: str | None = None
     cage_number: str | None = None
 

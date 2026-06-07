@@ -152,6 +152,28 @@ def get_or_create_cage(db: Session, cage_number: str | None, user_id: int):
     return cage
 
 
+def worksheet_rows_with_merged_values(sheet):
+    merged_values = {}
+    for merged_range in sheet.merged_cells.ranges:
+        anchor_value = sheet.cell(merged_range.min_row, merged_range.min_col).value
+        for row_index in range(merged_range.min_row, merged_range.max_row + 1):
+            for column_index in range(merged_range.min_col, merged_range.max_col + 1):
+                merged_values[(row_index, column_index)] = anchor_value
+
+    rows = []
+    for row_index in range(1, sheet.max_row + 1):
+        row = []
+        for column_index in range(1, sheet.max_column + 1):
+            row.append(
+                merged_values.get(
+                    (row_index, column_index),
+                    sheet.cell(row_index, column_index).value,
+                )
+            )
+        rows.append(tuple(row))
+    return rows
+
+
 def find_header_row(rows):
     best_index = None
     best_headers = []
@@ -219,7 +241,7 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
     matched_fields = set()
 
     for sheet in workbook.worksheets:
-        rows = list(sheet.iter_rows(values_only=True))
+        rows = worksheet_rows_with_merged_values(sheet)
         if not rows:
             continue
         sheets_scanned += 1
@@ -252,6 +274,11 @@ def import_mice_from_xlsx(content: bytes, db: Session, current_user: User):
                     if normalize_cell(existing_value):
                         continue
                     values[header] = current_value
+                cage_number = normalize_cell(values.get("cage_number"))
+                if cage_number:
+                    current_cage_number = cage_number
+                elif current_cage_number:
+                    values["cage_number"] = current_cage_number
             if not any(values.values()):
                 continue
             has_external_id_column = "external_id" in matched_fields

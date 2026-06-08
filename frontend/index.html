@@ -54,6 +54,7 @@
     <main id="appContent" class="app-main hidden">
       <nav class="tabs" aria-label="Application sections">
         <button class="tab-button active" type="button" data-tab="mice">Mice</button>
+        <button class="tab-button" type="button" data-tab="import">Import</button>
         <button class="tab-button" type="button" data-tab="mating">Mating</button>
         <button class="tab-button" type="button" data-tab="analysis">Analysis</button>
         <button class="tab-button" type="button" data-tab="sacrifice">Sacrifice History</button>
@@ -105,7 +106,7 @@
         </form>
       </section>
 
-      <section class="panel tab-panel" data-tab-panel="mice">
+      <section class="panel tab-panel hidden" data-tab-panel="import">
         <h2>Import Mice</h2>
         <form id="importForm" class="form-grid">
           <label class="wide">
@@ -183,7 +184,8 @@
             Notes
             <textarea name="notes" rows="3"></textarea>
           </label>
-          <button type="submit">Record Mating</button>
+          <button id="matingSubmitButton" type="submit">Record Mating</button>
+          <button id="cancelMatingEditButton" class="secondary-button hidden" type="button">Cancel Edit</button>
         </form>
       </section>
 
@@ -266,6 +268,13 @@
 
       <section class="panel table-panel tab-panel" data-tab-panel="mice">
         <h2>Mouse Table</h2>
+        <div class="table-toolbar">
+          <label>
+            Search Mouse Table
+            <input id="mouseTableSearchInput" placeholder="Mouse ID, retag, genotype, purpose, cage, color" />
+          </label>
+          <button id="clearMouseTableSearchButton" type="button">Clear</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead>
@@ -286,12 +295,39 @@
           </table>
         </div>
       </section>
+
+      <section class="panel table-panel tab-panel hidden" data-tab-panel="version">
+        <h2>Version History</h2>
+        <div class="version-list">
+          <article class="history-item">
+            <strong>Current build</strong>
+            <span>Top navigation tabs, dedicated import workspace, mouse-table search, live age display, cage transfer tools, mating and sacrifice history.</span>
+          </article>
+          <article class="history-item">
+            <strong>V3.1.1</strong>
+            <span>Flexible Excel import, per-pup litter history export, analysis search, contact information, and headerless cage-list support.</span>
+          </article>
+          <article class="history-item">
+            <strong>V3.0</strong>
+            <span>User login, per-user mouse databases, litter decisions, kept pups added to mouse list, and sacrifice analysis records.</span>
+          </article>
+          <article class="history-item">
+            <strong>V2</strong>
+            <span>Cage assignment, mating records, litter summaries, and mouse cage-list Excel export.</span>
+          </article>
+          <article class="history-item">
+            <strong>V1</strong>
+            <span>FastAPI, SQLAlchemy, SQLite, and the first mouse colony management interface.</span>
+          </article>
+        </div>
+      </section>
       </div>
     </main>
 
     <footer class="app-footer">
       <strong>Where's My Mouse</strong>
       <span>Build V3.1.1 user colonies, imports, litters, analysis records, and live cage lists</span>
+      <button class="footer-tab-button" type="button" data-tab="version">Version History</button>
       <span>Developed by Dexter</span>
       <a href="mailto:dexter.leung@nyulangone.org">dexter.leung@nyulangone.org</a>
     </footer>

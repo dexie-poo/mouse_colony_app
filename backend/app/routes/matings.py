@@ -87,6 +87,32 @@ def create_litter_pups(
     return ",".join(kept_mouse_ids) if kept_mouse_ids else None
 
 
+def clear_litter_pups(db: Session, db_mating: Mating, current_user: User):
+    existing_pups = (
+        db.query(LitterPup)
+        .filter(
+            LitterPup.user_id == current_user.id,
+            LitterPup.mating_id == db_mating.id,
+        )
+        .all()
+    )
+    generated_mouse_ids = [pup.mouse_id for pup in existing_pups if pup.mouse_id]
+    for pup in existing_pups:
+        db.delete(pup)
+    db.flush()
+
+    if generated_mouse_ids:
+        generated_mice = (
+            db.query(Mouse)
+            .filter(Mouse.id.in_(generated_mouse_ids), Mouse.user_id == current_user.id)
+            .all()
+        )
+        for mouse in generated_mice:
+            if mouse.remark == f"Kept pup from mating #{db_mating.id}":
+                db.delete(mouse)
+        db.flush()
+
+
 @router.post("/", response_model=MatingRead)
 def create_mating(
     mating: MatingCreate,
@@ -103,6 +129,36 @@ def create_mating(
     db.refresh(db_mating)
     kept_mouse_ids = create_litter_pups(db, db_mating, mating, current_user)
     db_mating.kept_mouse_ids = kept_mouse_ids
+    db.commit()
+    db.refresh(db_mating)
+    return db_mating
+
+
+@router.patch("/{mating_id}", response_model=MatingRead)
+def update_mating(
+    mating_id: int,
+    mating: MatingCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    db_mating = (
+        db.query(Mating)
+        .filter(Mating.id == mating_id, Mating.user_id == current_user.id)
+        .first()
+    )
+    if db_mating is None:
+        raise HTTPException(status_code=404, detail="Mating record not found")
+
+    ensure_mouse_exists(db, mating.sire_id, "Sire", current_user.id)
+    ensure_mouse_exists(db, mating.dam_id, "Dam", current_user.id)
+
+    payload = mating.model_dump(exclude={"pups"})
+    for field, value in payload.items():
+        setattr(db_mating, field, value)
+
+    clear_litter_pups(db, db_mating, current_user)
+    db_mating.kept_mouse_ids = create_litter_pups(db, db_mating, mating, current_user)
+
     db.commit()
     db.refresh(db_mating)
     return db_mating

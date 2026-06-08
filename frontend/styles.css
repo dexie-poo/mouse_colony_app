@@ -207,6 +207,15 @@ button:hover {
   background: var(--accent-dark);
 }
 
+.secondary-button {
+  background: #e6ece8;
+  color: var(--ink);
+}
+
+.secondary-button:hover {
+  background: #d5ded8;
+}
+
 .link-button {
   background: transparent;
   color: var(--accent);
@@ -255,6 +264,14 @@ button:hover {
   overflow-x: auto;
 }
 
+.table-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  margin-bottom: 14px;
+}
+
 table {
   border-collapse: collapse;
   min-width: 900px;
@@ -273,6 +290,16 @@ th {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.search-match td {
+  background: #eef7f2;
+}
+
+.empty-table {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }
 
 .history-list {
@@ -309,6 +336,11 @@ th {
   color: var(--muted);
   font-size: 14px;
   margin: 0;
+}
+
+.version-list {
+  display: grid;
+  gap: 10px;
 }
 
 .inline-status {
@@ -358,6 +390,20 @@ th {
   color: var(--accent);
 }
 
+.footer-tab-button {
+  background: transparent;
+  color: var(--accent);
+  min-height: auto;
+  padding: 0;
+}
+
+.footer-tab-button:hover,
+.footer-tab-button.active {
+  background: transparent;
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
 @media (max-width: 760px) {
   .app-header {
     align-items: flex-start;
@@ -377,6 +423,7 @@ th {
   .form-grid,
   .auth-panel,
   .pup-row,
+  .table-toolbar,
   .history-search,
   .analysis-search {
     grid-template-columns: 1fr;

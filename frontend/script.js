@@ -13,6 +13,8 @@ const mouseForm = document.querySelector("#mouseForm");
 const assignForm = document.querySelector("#assignForm");
 const assignMouseSearchInput = document.querySelector("#assignMouseSearchInput");
 const matingForm = document.querySelector("#matingForm");
+const matingSubmitButton = document.querySelector("#matingSubmitButton");
+const cancelMatingEditButton = document.querySelector("#cancelMatingEditButton");
 const addPupButton = document.querySelector("#addPupButton");
 const pupRows = document.querySelector("#pupRows");
 const analysisForm = document.querySelector("#analysisForm");
@@ -27,6 +29,8 @@ const exportButton = document.querySelector("#exportButton");
 const exportLitterHistoryButton = document.querySelector("#exportLitterHistoryButton");
 const refreshButton = document.querySelector("#refreshButton");
 const mouseTableBody = document.querySelector("#mouseTableBody");
+const mouseTableSearchInput = document.querySelector("#mouseTableSearchInput");
+const clearMouseTableSearchButton = document.querySelector("#clearMouseTableSearchButton");
 const assignMouseSelect = document.querySelector("#assignMouseSelect");
 const sireSelect = document.querySelector("#sireSelect");
 const damSelect = document.querySelector("#damSelect");
@@ -48,6 +52,7 @@ let mouseSort = { key: "external_id", direction: "asc" };
 let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
 let importInProgress = false;
+let editingMatingId = null;
 
 function showStatus(message, timeout = 3500) {
   statusBox.textContent = message;
@@ -221,6 +226,42 @@ function renderMouseSelect(select, placeholder = "Select mouse", filterText = ""
   }
 }
 
+function mouseTableSearchText(mouse) {
+  return [
+    mouse.id,
+    mouse.external_id,
+    mouse.retag,
+    mouse.gender,
+    mouse.color,
+    mouse.age_months,
+    mouse.genotype,
+    mouse.owner,
+    mouse.purpose,
+    mouse.remark,
+    cageNumber(mouse),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function filteredSortedMice() {
+  const query = mouseTableSearchInput.value.trim().toLowerCase();
+  const sorted = sortedMice();
+  return query ? sorted.filter((mouse) => mouseTableSearchText(mouse).includes(query)) : sorted;
+}
+
+function scrollFirstMouseMatch() {
+  const query = mouseTableSearchInput.value.trim();
+  if (!query) {
+    return;
+  }
+  const firstMatch = mouseTableBody.querySelector(".search-match");
+  if (firstMatch) {
+    firstMatch.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+}
+
 function renderControls() {
   renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
   renderMouseSelect(sireSelect, "Select sire");
@@ -240,11 +281,23 @@ function renderControls() {
 }
 
 function renderMouseTable() {
-  mouseTableBody.innerHTML = sortedMice()
+  const query = mouseTableSearchInput.value.trim();
+  const tableMice = filteredSortedMice();
+
+  if (!tableMice.length) {
+    mouseTableBody.innerHTML = `
+      <tr>
+        <td colspan="10" class="empty-table">No mice match the current search.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  mouseTableBody.innerHTML = tableMice
     .map((mouse) => {
       const displayId = mouse.external_id || mouse.id;
       return `
-        <tr>
+        <tr class="${query ? "search-match" : ""}" data-mouse-row="${escapeHtml(displayId)}">
           <td>${escapeHtml(displayId)}</td>
           <td>
             <input class="table-input" data-retag-input="${mouse.id}" value="${escapeHtml(mouse.retag || "")}" placeholder="New tag" />
@@ -266,6 +319,8 @@ function renderMouseTable() {
       `;
     })
     .join("");
+
+  scrollFirstMouseMatch();
 }
 
 function matingSearchText(mating) {
@@ -319,10 +374,12 @@ function renderMatingHistory() {
         <article class="history-item">
           <strong>${index + 1}. ${date} -> ${mating.male_pups ?? 0} male ${mating.female_pups ?? 0} female</strong>
           <span>Sire ${sire ? mouseLabel(sire) : mating.sire_id} x Dam ${dam ? mouseLabel(dam) : mating.dam_id}</span>
+          <span>Mating record #${mating.id}</span>
           <span>Litter size: ${mating.litter_size ?? ""}</span>
           <span>Pup genotypes: ${mating.pup_genotypes || ""}</span>
           <span>Created mouse IDs: ${mating.kept_mouse_ids || ""}</span>
           <span>${mating.notes || ""}</span>
+          <button type="button" class="link-button" data-edit-mating="${mating.id}">Update Litter / Genotyping</button>
         </article>
       `;
     })
@@ -391,6 +448,33 @@ function addPupRow(defaults = {}) {
     <button type="button" class="link-button" data-remove-pup>Remove</button>
   `;
   pupRows.appendChild(row);
+}
+
+function resetMatingForm() {
+  editingMatingId = null;
+  matingForm.reset();
+  pupRows.innerHTML = "";
+  matingSubmitButton.textContent = "Record Mating";
+  cancelMatingEditButton.classList.add("hidden");
+}
+
+function loadMatingIntoForm(mating) {
+  editingMatingId = mating.id;
+  matingForm.elements.sire_id.value = mating.sire_id;
+  matingForm.elements.dam_id.value = mating.dam_id;
+  matingForm.elements.mating_date.value = mating.mating_date || "";
+  matingForm.elements.litter_dob.value = mating.litter_dob || "";
+  matingForm.elements.litter_size.value = mating.litter_size ?? "";
+  matingForm.elements.male_pups.value = mating.male_pups ?? "";
+  matingForm.elements.female_pups.value = mating.female_pups ?? "";
+  matingForm.elements.pup_genotypes.value = mating.pup_genotypes || "";
+  matingForm.elements.notes.value = mating.notes || "";
+  pupRows.innerHTML = "";
+  (mating.pups || []).forEach((pup) => addPupRow(pup));
+  matingSubmitButton.textContent = "Update Mating / Litter";
+  cancelMatingEditButton.classList.remove("hidden");
+  showTab("mating");
+  showStatus(`Editing mating record #${mating.id}`);
 }
 
 function collectPups() {
@@ -561,19 +645,24 @@ matingForm.addEventListener("submit", async (event) => {
   payload.pups = collectPups();
   payload.notes = nullable(payload.notes);
 
-  await request("/matings/", {
-    method: "POST",
+  const wasEditing = Boolean(editingMatingId);
+  await request(editingMatingId ? `/matings/${editingMatingId}` : "/matings/", {
+    method: editingMatingId ? "PATCH" : "POST",
     body: JSON.stringify(payload),
   });
 
-  matingForm.reset();
-  pupRows.innerHTML = "";
-  showStatus("Mating recorded");
+  resetMatingForm();
+  showStatus(wasEditing ? "Mating and litter updated" : "Mating recorded");
   await loadData();
 });
 
 addPupButton.addEventListener("click", () => {
   addPupRow();
+});
+
+cancelMatingEditButton.addEventListener("click", () => {
+  resetMatingForm();
+  showStatus("Mating edit cancelled");
 });
 
 pupRows.addEventListener("click", (event) => {
@@ -645,6 +734,29 @@ clearMatingHistorySearchButton.addEventListener("click", () => {
   historyMouseSelect.value = "";
   matingHistorySearchInput.value = "";
   renderMatingHistory();
+});
+
+matingHistory.addEventListener("click", (event) => {
+  const editButton = event.target.closest("[data-edit-mating]");
+  if (!editButton) {
+    return;
+  }
+
+  const mating = matings.find((record) => String(record.id) === editButton.dataset.editMating);
+  if (!mating) {
+    showStatus("Mating record not found");
+    return;
+  }
+  loadMatingIntoForm(mating);
+});
+
+mouseTableSearchInput.addEventListener("input", () => {
+  renderMouseTable();
+});
+
+clearMouseTableSearchButton.addEventListener("click", () => {
+  mouseTableSearchInput.value = "";
+  renderMouseTable();
 });
 
 assignMouseSearchInput.addEventListener("input", () => {

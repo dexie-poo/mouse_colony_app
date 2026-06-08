@@ -44,6 +44,7 @@ class MatingCreate(MatingBase):
 class MatingRead(MatingBase):
     id: int
     kept_mouse_ids: str | None = None
+    pups: list["LitterPupRead"] = []
 
     class Config:
         from_attributes = True

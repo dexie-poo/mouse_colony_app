@@ -145,6 +145,10 @@ function renderAuthState() {
   refreshButton.classList.toggle("hidden", !loggedIn);
   logoutButton.classList.toggle("hidden", !loggedIn);
   currentUserLabel.textContent = currentUser ? currentUser.username : "";
+  if (loggedIn) {
+    const activeTab = document.querySelector(".tab-button.active")?.dataset.tab || "mice";
+    showTab(activeTab);
+  }
 }
 
 async function fileToDataUrl(file) {

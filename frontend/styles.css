@@ -255,6 +255,18 @@ button:hover {
   gap: 6px;
 }
 
+.table-heading {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(320px, 1fr);
+  margin-bottom: 14px;
+}
+
+.table-heading h2 {
+  margin: 0;
+}
+
 .wide,
 .table-panel {
   grid-column: 1 / -1;
@@ -269,7 +281,6 @@ button:hover {
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(260px, 1fr) auto;
-  margin-bottom: 14px;
 }
 
 table {
@@ -423,6 +434,7 @@ th {
   .form-grid,
   .auth-panel,
   .pup-row,
+  .table-heading,
   .table-toolbar,
   .history-search,
   .analysis-search {

@@ -180,3 +180,22 @@ def assign_mouse_to_cage(
     db.commit()
     db.refresh(db_mouse)
     return db_mouse
+
+
+@router.delete("/{mouse_id}")
+def delete_mouse(
+    mouse_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    db_mouse = (
+        db.query(Mouse)
+        .filter(Mouse.id == mouse_id, Mouse.user_id == current_user.id)
+        .first()
+    )
+    if db_mouse is None:
+        raise HTTPException(status_code=404, detail="Mouse not found")
+
+    db_mouse.sacrificed = "Deleted"
+    db.commit()
+    return {"deleted": True, "mouse_id": mouse_id}

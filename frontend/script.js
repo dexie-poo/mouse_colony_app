@@ -31,6 +31,11 @@ const refreshButton = document.querySelector("#refreshButton");
 const mouseTableBody = document.querySelector("#mouseTableBody");
 const mouseTableSearchInput = document.querySelector("#mouseTableSearchInput");
 const clearMouseTableSearchButton = document.querySelector("#clearMouseTableSearchButton");
+const deleteMouseDialog = document.querySelector("#deleteMouseDialog");
+const deleteMouseMessage = document.querySelector("#deleteMouseMessage");
+const skipDeleteConfirmCheckbox = document.querySelector("#skipDeleteConfirmCheckbox");
+const cancelDeleteMouseButton = document.querySelector("#cancelDeleteMouseButton");
+const confirmDeleteMouseButton = document.querySelector("#confirmDeleteMouseButton");
 const assignMouseSelect = document.querySelector("#assignMouseSelect");
 const sireSelect = document.querySelector("#sireSelect");
 const damSelect = document.querySelector("#damSelect");
@@ -53,6 +58,7 @@ let authToken = localStorage.getItem("mouse_colony_token");
 let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null");
 let importInProgress = false;
 let editingMatingId = null;
+let pendingDeleteMouseId = null;
 
 function showStatus(message, timeout = 3500) {
   statusBox.textContent = message;
@@ -179,6 +185,9 @@ function sortValue(mouse, key) {
   if (key === "age_months") {
     return Number(mouse.age_months ?? -1);
   }
+  if (key === "age_days") {
+    return Number(mouse.age_days ?? -1);
+  }
   if (key === "external_id") {
     return mouse.external_id || mouse.id;
   }
@@ -237,6 +246,7 @@ function mouseTableSearchText(mouse) {
     mouse.retag,
     mouse.gender,
     mouse.color,
+    mouse.age_days,
     mouse.age_months,
     mouse.genotype,
     mouse.owner,
@@ -264,6 +274,30 @@ function scrollFirstMouseMatch() {
   if (firstMatch) {
     firstMatch.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
+}
+
+function shouldSkipDeleteConfirm() {
+  return localStorage.getItem("mouse_colony_skip_delete_confirm") === "true";
+}
+
+function closeDeleteDialog() {
+  pendingDeleteMouseId = null;
+  deleteMouseDialog.classList.add("hidden");
+  skipDeleteConfirmCheckbox.checked = false;
+}
+
+async function deleteMouse(mouseId) {
+  await request(`/mice/${mouseId}`, { method: "DELETE" });
+  showStatus("Mouse deleted from live table");
+  await loadData();
+}
+
+function openDeleteDialog(mouseId) {
+  const mouse = mice.find((item) => String(item.id) === String(mouseId));
+  const label = mouse ? mouse.external_id || mouse.id : mouseId;
+  pendingDeleteMouseId = mouseId;
+  deleteMouseMessage.textContent = `Are you sure you want to delete mouse ${label} from the live table?`;
+  deleteMouseDialog.classList.remove("hidden");
 }
 
 function renderControls() {
@@ -302,20 +336,22 @@ function renderMouseTable() {
       const displayId = mouse.external_id || mouse.id;
       return `
         <tr class="${query ? "search-match" : ""}" data-mouse-row="${escapeHtml(displayId)}">
-          <td>${escapeHtml(displayId)}</td>
-          <td>
+          <td class="id-cell">
+            <span>${escapeHtml(displayId)}</span>
+            <button type="button" class="link-button danger-link" data-delete-mouse="${mouse.id}">Delete</button>
+          </td>
+          <td class="inline-edit-cell">
             <input class="table-input" data-retag-input="${mouse.id}" value="${escapeHtml(mouse.retag || "")}" placeholder="New tag" />
+            <button type="button" class="link-button" data-save-retag="${mouse.id}">Save</button>
           </td>
           <td>${escapeHtml(mouse.gender)}</td>
           <td>${escapeHtml(mouse.color || "Black")}</td>
+          <td>${escapeHtml(mouse.age_days ?? "")}</td>
           <td>${escapeHtml(mouse.age_months || "")}</td>
           <td>${escapeHtml(mouse.genotype)}</td>
           <td>${escapeHtml(mouse.purpose || "")}</td>
-          <td>
+          <td class="inline-edit-cell">
             <input class="table-input" data-cage-input="${mouse.id}" list="cageNumbers" value="${escapeHtml(cageNumber(mouse) || "")}" placeholder="Unassigned" />
-          </td>
-          <td class="table-actions">
-            <button type="button" class="link-button" data-save-retag="${mouse.id}">Save Retag</button>
             <button type="button" class="link-button" data-transfer-id="${mouse.id}">Transfer</button>
           </td>
           <td><button type="button" class="link-button" data-history-id="${mouse.id}">History</button></td>
@@ -785,6 +821,17 @@ document.querySelectorAll(".sort-button").forEach((button) => {
 });
 
 mouseTableBody.addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-mouse]");
+  if (deleteButton) {
+    const mouseId = deleteButton.dataset.deleteMouse;
+    if (shouldSkipDeleteConfirm()) {
+      deleteMouse(mouseId).catch((error) => showStatus(error.message));
+      return;
+    }
+    openDeleteDialog(mouseId);
+    return;
+  }
+
   const transferButton = event.target.closest("[data-transfer-id]");
   if (transferButton) {
     const mouseId = transferButton.dataset.transferId;
@@ -827,6 +874,33 @@ mouseTableBody.addEventListener("click", (event) => {
   historyMouseSelect.value = historyButton.dataset.historyId;
   showTab("mating");
   renderMatingHistory();
+});
+
+cancelDeleteMouseButton.addEventListener("click", () => {
+  closeDeleteDialog();
+});
+
+confirmDeleteMouseButton.addEventListener("click", async () => {
+  if (!pendingDeleteMouseId) {
+    closeDeleteDialog();
+    return;
+  }
+  if (skipDeleteConfirmCheckbox.checked) {
+    localStorage.setItem("mouse_colony_skip_delete_confirm", "true");
+  }
+  const mouseId = pendingDeleteMouseId;
+  closeDeleteDialog();
+  try {
+    await deleteMouse(mouseId);
+  } catch (error) {
+    showStatus(error.message);
+  }
+});
+
+deleteMouseDialog.addEventListener("click", (event) => {
+  if (event.target === deleteMouseDialog) {
+    closeDeleteDialog();
+  }
 });
 
 refreshButton.addEventListener("click", () => {
@@ -892,4 +966,10 @@ window.addEventListener("error", (event) => {
 window.addEventListener("unhandledrejection", (event) => {
   const message = event.reason instanceof Error ? event.reason.message : String(event.reason);
   showStatus(message);
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !deleteMouseDialog.classList.contains("hidden")) {
+    closeDeleteDialog();
+  }
 });

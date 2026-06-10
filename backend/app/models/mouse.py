@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
+from datetime import date
 
 from ..database import Base
 
@@ -39,3 +40,9 @@ class Mouse(Base):
     @property
     def cage_number(self):
         return self.cage.cage_number if self.cage else None
+
+    @property
+    def age_days(self):
+        if self.dob is None:
+            return None
+        return max((date.today() - self.dob).days, 0)

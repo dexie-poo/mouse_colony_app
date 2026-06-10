@@ -31,6 +31,7 @@ class MouseUpdate(MouseBase):
 class MouseRead(MouseBase):
     id: int
     user_id: int
+    age_days: int | None = None
     sacrificed: str | None = None
     cage: CageRead | None = None
 

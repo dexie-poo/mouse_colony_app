@@ -285,11 +285,11 @@
                 <th><button type="button" class="sort-button" data-sort-key="retag">Retag</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="gender">Sex</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="color">Color</button></th>
+                <th><button type="button" class="sort-button" data-sort-key="age_days">Age (Days)</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="age_months">Age (Months)</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="genotype">Genotype</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="purpose">Purpose</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="cage">Barcodes</button></th>
-                <th>Actions</th>
                 <th>Mating</th>
               </tr>
             </thead>
@@ -333,6 +333,21 @@
       <span>Developed by Dexter</span>
       <a href="mailto:dexter.leung@nyulangone.org">dexter.leung@nyulangone.org</a>
     </footer>
+
+    <div id="deleteMouseDialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="deleteMouseTitle">
+      <div class="dialog">
+        <h2 id="deleteMouseTitle">Delete mouse?</h2>
+        <p id="deleteMouseMessage">Are you sure you want to delete this mouse from the live table?</p>
+        <label class="checkbox-label">
+          <input id="skipDeleteConfirmCheckbox" type="checkbox" />
+          Do not ask again in the future
+        </label>
+        <div class="dialog-actions">
+          <button id="cancelDeleteMouseButton" class="secondary-button" type="button">Cancel</button>
+          <button id="confirmDeleteMouseButton" class="danger-button" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
 
     <div id="status" class="status" role="status"></div>
     <script src="/static/script.js"></script>

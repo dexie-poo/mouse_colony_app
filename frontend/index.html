@@ -55,13 +55,12 @@
       <nav class="tabs" aria-label="Application sections">
         <button class="tab-button active" type="button" data-tab="mice">Mice</button>
         <button class="tab-button" type="button" data-tab="import">Import</button>
-        <button class="tab-button" type="button" data-tab="mating">Mating</button>
         <button class="tab-button" type="button" data-tab="analysis">Analysis</button>
         <button class="tab-button" type="button" data-tab="sacrifice">Sacrifice History</button>
       </nav>
 
       <div class="layout">
-      <section class="panel tab-panel" data-tab-panel="mice">
+      <section id="addMousePanel" class="panel tab-panel" data-tab-panel="mice">
         <h2>Add Mouse</h2>
         <form id="mouseForm" class="form-grid">
           <label>
@@ -138,7 +137,7 @@
         </form>
       </section>
 
-      <section class="panel tab-panel hidden" data-tab-panel="mating">
+      <section id="matingWorkflowPanel" class="panel tab-panel hidden" data-tab-panel="mating">
         <h2>Mating</h2>
         <form id="matingForm" class="form-grid">
           <label>
@@ -189,7 +188,7 @@
         </form>
       </section>
 
-      <section class="panel tab-panel hidden" data-tab-panel="mating">
+      <section id="matingHistoryPanel" class="panel tab-panel hidden" data-tab-panel="mating">
         <h2>Mating History</h2>
         <div class="history-search">
           <label>
@@ -206,7 +205,7 @@
         <div id="matingHistory" class="history-list"></div>
       </section>
 
-      <section class="panel tab-panel hidden" data-tab-panel="analysis">
+      <section id="analysisPanel" class="panel tab-panel hidden" data-tab-panel="analysis">
         <h2>Analysis</h2>
         <form id="analysisForm" class="form-grid">
           <label>
@@ -250,7 +249,7 @@
         </form>
       </section>
 
-      <section class="panel tab-panel hidden" data-tab-panel="sacrifice">
+      <section id="sacrificeHistoryPanel" class="panel tab-panel hidden" data-tab-panel="sacrifice">
         <h2>Sacrifice History</h2>
         <div class="analysis-search">
           <label>
@@ -266,7 +265,7 @@
         <div id="analysisList" class="history-list"></div>
       </section>
 
-      <section class="panel table-panel tab-panel" data-tab-panel="mice">
+      <section id="mouseTablePanel" class="panel table-panel tab-panel" data-tab-panel="mice">
         <div class="table-heading">
           <h2>Mouse Table</h2>
           <div class="table-toolbar">
@@ -290,7 +289,7 @@
                 <th><button type="button" class="sort-button" data-sort-key="genotype">Genotype</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="purpose">Purpose</button></th>
                 <th><button type="button" class="sort-button" data-sort-key="cage">Barcodes</button></th>
-                <th>Mating</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="mouseTableBody"></tbody>
@@ -345,6 +344,23 @@
         <div class="dialog-actions">
           <button id="cancelDeleteMouseButton" class="secondary-button" type="button">Cancel</button>
           <button id="confirmDeleteMouseButton" class="danger-button" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="guideOverlay" class="guide-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+      <div class="guide-card">
+        <span id="guideStepCounter" class="guide-counter"></span>
+        <h2 id="guideTitle"></h2>
+        <p id="guideText"></p>
+        <label class="checkbox-label">
+          <input id="dontShowGuideCheckbox" type="checkbox" />
+          Do not show this again
+        </label>
+        <div class="guide-actions">
+          <button id="skipGuideButton" class="secondary-button" type="button">Skip</button>
+          <button id="prevGuideButton" class="secondary-button" type="button">Back</button>
+          <button id="nextGuideButton" type="button">Next</button>
         </div>
       </div>
     </div>

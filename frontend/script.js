@@ -36,6 +36,14 @@ const deleteMouseMessage = document.querySelector("#deleteMouseMessage");
 const skipDeleteConfirmCheckbox = document.querySelector("#skipDeleteConfirmCheckbox");
 const cancelDeleteMouseButton = document.querySelector("#cancelDeleteMouseButton");
 const confirmDeleteMouseButton = document.querySelector("#confirmDeleteMouseButton");
+const guideOverlay = document.querySelector("#guideOverlay");
+const guideTitle = document.querySelector("#guideTitle");
+const guideText = document.querySelector("#guideText");
+const guideStepCounter = document.querySelector("#guideStepCounter");
+const dontShowGuideCheckbox = document.querySelector("#dontShowGuideCheckbox");
+const skipGuideButton = document.querySelector("#skipGuideButton");
+const prevGuideButton = document.querySelector("#prevGuideButton");
+const nextGuideButton = document.querySelector("#nextGuideButton");
 const assignMouseSelect = document.querySelector("#assignMouseSelect");
 const sireSelect = document.querySelector("#sireSelect");
 const damSelect = document.querySelector("#damSelect");
@@ -59,6 +67,41 @@ let currentUser = JSON.parse(localStorage.getItem("mouse_colony_user") || "null"
 let importInProgress = false;
 let editingMatingId = null;
 let pendingDeleteMouseId = null;
+let guideStepIndex = 0;
+let guideActiveTarget = null;
+
+const guideSteps = [
+  {
+    tab: "mice",
+    target: '.tab-button[data-tab="mice"]',
+    title: "Mice",
+    text: "Add mice information to the mice table.",
+  },
+  {
+    tab: "mating",
+    target: "#matingWorkflowPanel",
+    title: "Mating Workflow",
+    text: "Record mating history, PCR genotyping, pups weaned, and kept or euthanised pup decisions. Click a mouse ID in the table to return to mating history for that mouse.",
+  },
+  {
+    tab: "analysis",
+    target: '.tab-button[data-tab="analysis"]',
+    title: "Sacrifice",
+    text: "Record sacrifice information including sacrifice date, age, organs extracted, organ condition, preservation method, notes, and images.",
+  },
+  {
+    tab: "sacrifice",
+    target: '.tab-button[data-tab="sacrifice"]',
+    title: "Sacrifice History",
+    text: "Search and review previous sacrificed mouse records, including organ details, preservation information, notes, and uploaded images.",
+  },
+  {
+    tab: "mice",
+    target: "#mouseTablePanel",
+    title: "Mouse Table",
+    text: "Current mouse table showing all live mice. Search or filter rows, edit retag and barcode values, delete live rows with the red X, and click a mouse ID to show mating history.",
+  },
+];
 
 function showStatus(message, timeout = 3500) {
   statusBox.textContent = message;
@@ -141,6 +184,56 @@ function showTab(tabName) {
   tabPanels.forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.tabPanel !== tabName);
   });
+}
+
+function guideStorageKey() {
+  const userPart = currentUser ? currentUser.username : "anonymous";
+  return `mouse_colony_guide_complete_${userPart}`;
+}
+
+function clearGuideHighlight() {
+  if (guideActiveTarget) {
+    guideActiveTarget.classList.remove("guide-highlight");
+    guideActiveTarget = null;
+  }
+}
+
+function renderGuideStep() {
+  const step = guideSteps[guideStepIndex];
+  showTab(step.tab);
+  clearGuideHighlight();
+
+  guideTitle.textContent = step.title;
+  guideText.textContent = step.text;
+  guideStepCounter.textContent = `${guideStepIndex + 1} of ${guideSteps.length}`;
+  prevGuideButton.disabled = guideStepIndex === 0;
+  nextGuideButton.textContent = guideStepIndex === guideSteps.length - 1 ? "Finish" : "Next";
+
+  guideActiveTarget = document.querySelector(step.target);
+  if (guideActiveTarget) {
+    guideActiveTarget.classList.add("guide-highlight");
+    guideActiveTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+}
+
+function startGuideIfNeeded() {
+  if (!currentUser || localStorage.getItem(guideStorageKey()) === "true") {
+    return;
+  }
+  guideStepIndex = 0;
+  dontShowGuideCheckbox.checked = false;
+  guideOverlay.classList.remove("hidden");
+  renderGuideStep();
+}
+
+function closeGuide({ remember = false } = {}) {
+  if (remember) {
+    localStorage.setItem(guideStorageKey(), "true");
+  }
+  clearGuideHighlight();
+  guideOverlay.classList.add("hidden");
+  dontShowGuideCheckbox.checked = false;
+  showTab("mice");
 }
 
 function renderAuthState() {
@@ -336,13 +429,16 @@ function renderMouseTable() {
       const displayId = mouse.external_id || mouse.id;
       return `
         <tr class="${query ? "search-match" : ""}" data-mouse-row="${escapeHtml(displayId)}">
-          <td class="id-cell">
-            <span>${escapeHtml(displayId)}</span>
-            <button type="button" class="link-button danger-link" data-delete-mouse="${mouse.id}">Delete</button>
+          <td>
+            <div class="id-cell">
+              <button type="button" class="link-button mouse-id-button" data-history-id="${mouse.id}">${escapeHtml(displayId)}</button>
+            </div>
           </td>
-          <td class="inline-edit-cell">
-            <input class="table-input" data-retag-input="${mouse.id}" value="${escapeHtml(mouse.retag || "")}" placeholder="New tag" />
-            <button type="button" class="link-button" data-save-retag="${mouse.id}">Save</button>
+          <td>
+            <div class="inline-edit-cell">
+              <input class="table-input" data-retag-input="${mouse.id}" value="${escapeHtml(mouse.retag || "")}" placeholder="New tag" />
+              <button type="button" class="link-button" data-save-retag="${mouse.id}">Save</button>
+            </div>
           </td>
           <td>${escapeHtml(mouse.gender)}</td>
           <td>${escapeHtml(mouse.color || "Black")}</td>
@@ -350,11 +446,15 @@ function renderMouseTable() {
           <td>${escapeHtml(mouse.age_months || "")}</td>
           <td>${escapeHtml(mouse.genotype)}</td>
           <td>${escapeHtml(mouse.purpose || "")}</td>
-          <td class="inline-edit-cell">
-            <input class="table-input" data-cage-input="${mouse.id}" list="cageNumbers" value="${escapeHtml(cageNumber(mouse) || "")}" placeholder="Unassigned" />
-            <button type="button" class="link-button" data-transfer-id="${mouse.id}">Transfer</button>
+          <td>
+            <div class="inline-edit-cell">
+              <input class="table-input" data-cage-input="${mouse.id}" list="cageNumbers" value="${escapeHtml(cageNumber(mouse) || "")}" placeholder="Unassigned" />
+              <button type="button" class="link-button" data-transfer-id="${mouse.id}">Transfer</button>
+            </div>
           </td>
-          <td><button type="button" class="link-button" data-history-id="${mouse.id}">History</button></td>
+          <td class="delete-cell">
+            <button type="button" class="icon-danger-button" data-delete-mouse="${mouse.id}" aria-label="Delete mouse ${escapeHtml(displayId)}">x</button>
+          </td>
         </tr>
       `;
     })
@@ -608,6 +708,7 @@ loginForm.addEventListener("submit", async (event) => {
     loginForm.reset();
     showStatus("Logged in");
     await loadData();
+    startGuideIfNeeded();
   } catch (error) {
     window.alert("Wrong username or password. Please check the User ID and try again.");
     showStatus(error.message);
@@ -799,6 +900,26 @@ clearMouseTableSearchButton.addEventListener("click", () => {
   renderMouseTable();
 });
 
+skipGuideButton.addEventListener("click", () => {
+  closeGuide({ remember: dontShowGuideCheckbox.checked });
+});
+
+prevGuideButton.addEventListener("click", () => {
+  if (guideStepIndex > 0) {
+    guideStepIndex -= 1;
+    renderGuideStep();
+  }
+});
+
+nextGuideButton.addEventListener("click", () => {
+  if (guideStepIndex === guideSteps.length - 1) {
+    closeGuide({ remember: true });
+    return;
+  }
+  guideStepIndex += 1;
+  renderGuideStep();
+});
+
 assignMouseSearchInput.addEventListener("input", () => {
   renderMouseSelect(assignMouseSelect, "Select mouse", assignMouseSearchInput.value);
 });
@@ -942,6 +1063,8 @@ exportLitterHistoryButton.addEventListener("click", async () => {
 });
 
 logoutButton.addEventListener("click", () => {
+  clearGuideHighlight();
+  guideOverlay.classList.add("hidden");
   clearAuth();
   mice = [];
   cages = [];
@@ -956,6 +1079,8 @@ if (authToken) {
   loadData().catch((error) => {
     clearAuth();
     showStatus(error.message);
+  }).then(() => {
+    startGuideIfNeeded();
   });
 }
 

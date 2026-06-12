@@ -245,6 +245,26 @@ button:hover {
   color: #8f1d14;
 }
 
+.icon-danger-button {
+  background: transparent;
+  color: #b42318;
+  font-size: 20px;
+  line-height: 1;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+
+.icon-danger-button:hover {
+  background: #fbe9e7;
+  color: #8f1d14;
+}
+
+.mouse-id-button {
+  font-weight: 700;
+  text-align: left;
+}
+
 .sort-button {
   background: transparent;
   color: var(--muted);
@@ -262,22 +282,27 @@ button:hover {
 
 .table-input {
   min-height: 32px;
-  min-width: 110px;
+  min-width: 0;
   padding: 6px 8px;
 }
 
 .id-cell {
-  display: grid;
-  gap: 6px;
+  align-items: center;
+  display: flex;
   min-width: 92px;
+}
+
+.delete-cell {
+  text-align: center;
+  width: 38px;
 }
 
 .inline-edit-cell {
   align-items: center;
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(110px, 1fr) auto;
-  min-width: 190px;
+  grid-template-columns: minmax(140px, 1fr) auto;
+  min-width: 220px;
 }
 
 .table-actions {
@@ -315,7 +340,7 @@ button:hover {
 
 table {
   border-collapse: collapse;
-  min-width: 900px;
+  min-width: 1120px;
   width: 100%;
 }
 
@@ -467,6 +492,63 @@ th {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+
+.guide-overlay {
+  background: rgba(31, 42, 36, 0.62);
+  inset: 0;
+  position: fixed;
+  z-index: 30;
+}
+
+.guide-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 56px rgba(31, 42, 36, 0.28);
+  display: grid;
+  gap: 12px;
+  left: 50%;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 18px;
+  position: fixed;
+  top: 24px;
+  transform: translateX(-50%);
+  width: 100%;
+  z-index: 35;
+}
+
+.guide-card h2,
+.guide-card p {
+  margin: 0;
+}
+
+.guide-card p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.guide-counter {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guide-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.guide-highlight {
+  box-shadow: 0 0 0 4px rgba(47, 111, 94, 0.35), 0 16px 48px rgba(31, 42, 36, 0.24);
+  position: relative;
+  z-index: 32;
+}
+
+.guide-highlight.tab-button {
+  box-shadow: 0 0 0 4px rgba(47, 111, 94, 0.28);
 }
 
 .footer-tab-button {
